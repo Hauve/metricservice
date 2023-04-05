@@ -29,7 +29,7 @@ func mainHandler(w http.ResponseWriter, r *http.Request) {
 	path := r.URL.Path
 	path = strings.TrimPrefix(path, "/update/")
 	pathParts := strings.Split(path, "/")
-	if len(pathParts) != 2 {
+	if len(pathParts) != 3 {
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
