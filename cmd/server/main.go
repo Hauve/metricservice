@@ -30,7 +30,7 @@ func gaugeHandler(w http.ResponseWriter, r *http.Request) {
 	path = strings.TrimPrefix(path, "/update/gauge/")
 	pathParts := strings.Split(path, "/")
 	if len(pathParts) != 2 {
-		w.WriteHeader(http.StatusBadRequest)
+		w.WriteHeader(http.StatusNotFound)
 		return
 	}
 
@@ -61,7 +61,7 @@ func counterHandler(w http.ResponseWriter, r *http.Request) {
 	path = strings.TrimPrefix(path, "/update/counter/")
 	pathParts := strings.Split(path, "/")
 	if len(pathParts) != 2 {
-		w.WriteHeader(http.StatusBadRequest)
+		w.WriteHeader(http.StatusNotFound)
 		return
 	}
 
@@ -92,7 +92,9 @@ func main() {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/update/gauge/", gaugeHandler)
 	mux.HandleFunc("/update/counter/", counterHandler)
-	mux.Handle("/", http.NotFoundHandler())
+	mux.Handle("/", http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		writer.WriteHeader(http.StatusNotImplemented)
+	}))
 	err := http.ListenAndServe(":8080", mux)
 	if err != nil {
 		panic("Listen and serve failed!")
