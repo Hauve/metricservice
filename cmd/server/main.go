@@ -72,10 +72,10 @@ func counterHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	if _, ok := MyMemStorage.data[name]; ok == false {
+	if _, ok := MyMemStorage.data[name]; !ok {
 		MyMemStorage.data[name] = val
 	} else {
-		oldValue, _ := MyMemStorage.data[name]
+		oldValue := MyMemStorage.data[name]
 		floatOldValue, _ := strconv.ParseFloat(oldValue, 64)
 		newValue := fmt.Sprintf("%f", floatNewValue+floatOldValue)
 		MyMemStorage.data[name] = newValue
