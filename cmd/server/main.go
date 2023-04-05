@@ -93,7 +93,7 @@ func main() {
 	mux.HandleFunc("/update/gauge/", gaugeHandler)
 	mux.HandleFunc("/update/counter/", counterHandler)
 	mux.Handle("/", http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-		writer.WriteHeader(http.StatusNotImplemented)
+		writer.WriteHeader(http.StatusNotFound)
 	}))
 	err := http.ListenAndServe(":8080", mux)
 	if err != nil {
