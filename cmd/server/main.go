@@ -84,7 +84,7 @@ func mainHandler(w http.ResponseWriter, r *http.Request) {
 
 func main() {
 	mux := http.NewServeMux()
-	mux.HandleFunc("/update", mainHandler)
+	mux.HandleFunc("/update/", mainHandler)
 	mux.Handle("/", http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 		writer.WriteHeader(http.StatusNotImplemented)
 	}))
