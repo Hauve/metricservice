@@ -1,5 +1,6 @@
 package handlers
 
+//github.com/Hauve/metricservice.git/internal/handlers
 import (
 	"github.com/Hauve/metricservice.git/internal/storage"
 	"net/http"

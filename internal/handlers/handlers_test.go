@@ -50,7 +50,7 @@ func TestUpdateHandler(t *testing.T) {
 			path:   "/update/counter/counterName/elf",
 			method: http.MethodPost,
 			want: want{
-				code:        200,
+				code:        400,
 				contentType: "text/plain; charset=utf-8",
 			},
 		}, {
@@ -66,7 +66,7 @@ func TestUpdateHandler(t *testing.T) {
 			path:   "/counter/counterName",
 			method: http.MethodPost,
 			want: want{
-				code:        404,
+				code:        501,
 				contentType: "text/plain; charset=utf-8",
 			},
 		}, {

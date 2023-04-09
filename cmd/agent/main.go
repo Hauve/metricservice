@@ -60,18 +60,14 @@ func sendMetrics() {
 
 	gaugeNames := AgentStorage.GetGaugeKeys()
 	for _, name := range *gaugeNames {
-		value, ok := AgentStorage.GetGauge(name)
-		if !ok {
-		}
+		value, _ := AgentStorage.GetGauge(name)
 		val := fmt.Sprintf("%f", value)
 		go sendMetric(name, val, storage.Gauge)
 	}
 
 	counterNames := AgentStorage.GetCounterKeys()
 	for _, name := range *counterNames {
-		value, ok := AgentStorage.GetCounter(name)
-		if !ok {
-		}
+		value, _ := AgentStorage.GetCounter(name)
 		val := fmt.Sprintf("%d", value)
 		go sendMetric(name, val, storage.Gauge)
 	}
@@ -86,11 +82,13 @@ func sendMetric(name string, value string, mt storage.MetricType) {
 	resp, err := client.Do(req)
 	if err != nil {
 		log.Printf("An Error Occured %v\n", err)
+		return
 	}
 	defer func(Body io.ReadCloser) {
 		err := Body.Close()
 		if err != nil {
 			log.Printf("An Error Occured %v\n", err)
+			return
 		}
 	}(resp.Body)
 }

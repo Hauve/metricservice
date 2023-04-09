@@ -1,5 +1,7 @@
 package storage
 
+import "strings"
+
 type MetricType = string
 
 const (
@@ -44,16 +46,18 @@ func (st *MemStorage) GetCounter(key string) (value int64, ok bool) {
 }
 
 func (st *MemStorage) GetGaugeKeys() *[]string {
-	keys := make([]string, len(st.gauge))
-	for key := range st.counter {
+	keys := make([]string, 0)
+	for key := range st.gauge {
+		key = strings.TrimSpace(key)
 		keys = append(keys, key)
 	}
 	return &keys
 }
 
 func (st *MemStorage) GetCounterKeys() *[]string {
-	keys := make([]string, len(st.gauge))
+	keys := make([]string, 0)
 	for key := range st.counter {
+		key = strings.TrimSpace(key)
 		keys = append(keys, key)
 	}
 	return &keys
