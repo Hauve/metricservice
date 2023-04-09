@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"github.com/Hauve/metricservice.git/internal/storage"
-	"io"
 	"log"
 	"math/rand"
 	"net/http"
@@ -84,18 +83,15 @@ func sendMetric(name string, value string, mt storage.MetricType) {
 	req.Header.Add("Content-Length", `0`)
 	req.Header.Add("Content-Type", `text/plain`)
 	resp, err := client.Do(req)
-	defer func(Body io.ReadCloser) {
-		err := Body.Close()
-		if err != nil {
-			log.Printf("An Error Occured %v\n", err)
-			return
-		}
-	}(resp.Body)
 	if err != nil {
 		log.Printf("An Error Occured %v\n", err)
 		return
 	}
-
+	err = resp.Body.Close()
+	if err != nil {
+		log.Printf("An Error Occured %v\n", err)
+		return
+	}
 }
 
 func main() {

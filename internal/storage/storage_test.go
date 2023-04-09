@@ -94,7 +94,21 @@ func TestMemStorage_GetCounterKeys(t *testing.T) {
 				counter: tt.fields.counter,
 			}
 			if got := st.GetCounterKeys(); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("GetCounterKeys() = %v, want %v", got, tt.want)
+				//GetGaugeKeys не гарантирует определённый порядок элементов
+				equal := false
+				for gotKey := range *got {
+					for wantKey := range *tt.want {
+						if gotKey == wantKey {
+							equal = true
+							break
+						}
+					}
+					if !equal {
+						t.Errorf("GetGaugeKeys() = %v, want %v", got, tt.want)
+						return
+					}
+					equal = false
+				}
 			}
 		})
 	}
@@ -189,7 +203,21 @@ func TestMemStorage_GetGaugeKeys(t *testing.T) {
 				counter: tt.fields.counter,
 			}
 			if got := st.GetGaugeKeys(); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("GetGaugeKeys() = %v, want %v", got, tt.want)
+				//GetGaugeKeys не гарантирует определённый порядок элементов
+				equal := false
+				for gotKey := range *got {
+					for wantKey := range *tt.want {
+						if gotKey == wantKey {
+							equal = true
+							break
+						}
+					}
+					if !equal {
+						t.Errorf("GetGaugeKeys() = %v, want %v", got, tt.want)
+						return
+					}
+					equal = false
+				}
 			}
 		})
 	}
