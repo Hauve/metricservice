@@ -14,9 +14,7 @@ var MyMemStorage = storage.NewMemStorage()
 func UpdateHandler(w http.ResponseWriter, r *http.Request) {
 	header := w.Header()
 	header.Set("Content-Type", "text/plain; charset=utf-8")
-	header.Set("Content-Length", "11")
 	header.Set("Date", time.Now().String())
-
 	if r.Method != http.MethodPost {
 		// разрешаем только POST-запросы
 		w.WriteHeader(http.StatusMethodNotAllowed)
@@ -44,24 +42,23 @@ func UpdateHandler(w http.ResponseWriter, r *http.Request) {
 
 	switch metric {
 	case storage.Gauge:
-		val, err := strconv.ParseFloat(val, 64)
+		valFloat, err := strconv.ParseFloat(val, 64)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
-		MyMemStorage.SetGauge(name, val)
+		MyMemStorage.SetGauge(name, valFloat)
 
 	case storage.Counter:
-		val, err := strconv.ParseInt(val, 10, 64)
+		valInt, err := strconv.ParseInt(val, 10, 64)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
-		MyMemStorage.SetCounter(name, val)
+		MyMemStorage.SetCounter(name, valInt)
+
 	default:
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
-
-	w.WriteHeader(http.StatusOK)
 }
