@@ -1,69 +1,60 @@
 package storage
 
-import (
-	"fmt"
-	"strconv"
-)
-
 type MetricType = string
 
 const (
-	Gauge   MetricType = MetricType("gauge")
-	Counter            = MetricType("counter")
+	Gauge   = MetricType("gauge")
+	Counter = MetricType("counter")
 )
 
 type MemStorage struct {
-	gauge   map[string]string
-	counter map[string]string
+	gauge   map[string]float64
+	counter map[string]int64
 }
 
 func NewMemStorage() *MemStorage {
 	return &MemStorage{
-		gauge:   make(map[string]string),
-		counter: make(map[string]string),
+		gauge:   make(map[string]float64),
+		counter: make(map[string]int64),
 	}
 }
 
-func (st *MemStorage) Set(key string, val string, metricType MetricType) (ok bool) {
-	switch metricType {
-	case Counter:
-		beforeStr, ok := st.counter[key]
-		if !ok {
-			st.counter[key] = val
-			return true
-		}
-		beforeInt, err := strconv.ParseInt(beforeStr, 10, 64)
-		if err != nil {
-			fmt.Println(err.Error())
-			return false
-		}
-		valInt, err := strconv.ParseInt(beforeStr, 10, 64)
-		if err != nil {
-			fmt.Println(err.Error())
-			return false
-		}
-		res := fmt.Sprintf("%d", valInt+beforeInt)
-		st.counter[key] = res
-	case Gauge:
-		st.gauge[key] = val
-	}
-	return true
+func (st *MemStorage) SetGauge(key string, val float64) {
+	st.gauge[key] = val
 }
 
-func (st *MemStorage) Get(key string, metricType MetricType) (value string, ok bool) {
-	switch metricType {
-	case Counter:
-		val, ok := st.counter[key]
-		if !ok {
-			return "", false
-		}
-		return val, true
-	case Gauge:
-		val, ok := st.gauge[key]
-		if !ok {
-			return "", false
-		}
-		return val, true
+func (st *MemStorage) GetGauge(key string) (value float64, ok bool) {
+	val, ok := st.gauge[key]
+	if !ok {
+		return float64(0), false
 	}
-	return "", false
+	return val, true
+}
+
+func (st *MemStorage) SetCounter(key string, val int64) {
+	st.counter[key] = val + st.counter[key]
+}
+
+func (st *MemStorage) GetCounter(key string) (value int64, ok bool) {
+	val, ok := st.counter[key]
+	if !ok {
+		return 0, false
+	}
+	return val, true
+}
+
+func (st *MemStorage) GetGaugeKeys() *[]string {
+	keys := make([]string, len(st.gauge))
+	for key := range st.counter {
+		keys = append(keys, key)
+	}
+	return &keys
+}
+
+func (st *MemStorage) GetCounterKeys() *[]string {
+	keys := make([]string, len(st.gauge))
+	for key := range st.counter {
+		keys = append(keys, key)
+	}
+	return &keys
 }
