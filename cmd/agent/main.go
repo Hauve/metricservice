@@ -77,13 +77,13 @@ func sendMetric(name string, value string, mt storage.MetricType) {
 	client := &http.Client{}
 	url := fmt.Sprintf("http://localhost:8080/update/%s/%s/%s", mt, name, value)
 	req, err := http.NewRequest(http.MethodPost, url, nil)
-	req.Header.Add("Content-Length", `0`)
-	req.Header.Add("Content-Type", `text/plain`)
-	resp, err := client.Do(req)
 	if err != nil {
 		log.Printf("An Error Occured %v\n", err)
 		return
 	}
+	req.Header.Add("Content-Length", `0`)
+	req.Header.Add("Content-Type", `text/plain`)
+	resp, err := client.Do(req)
 	defer func(Body io.ReadCloser) {
 		err := Body.Close()
 		if err != nil {
@@ -91,6 +91,11 @@ func sendMetric(name string, value string, mt storage.MetricType) {
 			return
 		}
 	}(resp.Body)
+	if err != nil {
+		log.Printf("An Error Occured %v\n", err)
+		return
+	}
+
 }
 
 func main() {

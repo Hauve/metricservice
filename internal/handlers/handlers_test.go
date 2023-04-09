@@ -2,9 +2,8 @@ package handlers
 
 import (
 	"github.com/stretchr/testify/assert"
-	"log"
-
 	"io"
+	"log"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -87,15 +86,14 @@ func TestUpdateHandler(t *testing.T) {
 			UpdateHandler(w, request)
 
 			res := w.Result()
-			// проверяем код ответа
-			assert.Equal(t, res.StatusCode, test.want.code)
-			// получаем и проверяем тело запроса
 			defer func(Body io.ReadCloser) {
 				err := Body.Close()
 				if err != nil {
 					log.Printf("An Error Occured %v\n", err)
 				}
 			}(res.Body)
+			// проверяем код ответа
+			assert.Equal(t, res.StatusCode, test.want.code)
 			assert.Equal(t, res.Header.Get("Content-Type"), test.want.contentType)
 		})
 	}
