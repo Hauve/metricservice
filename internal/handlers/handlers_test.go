@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-func TestUpdateHandler(t *testing.T) {
+func TestPostHandler(t *testing.T) {
 	type want struct {
 		code        int
 		contentType string
@@ -81,7 +81,7 @@ func TestUpdateHandler(t *testing.T) {
 			request := httptest.NewRequest(test.method, test.path, nil)
 			// создаём новый Recorder
 			w := httptest.NewRecorder()
-			UpdateHandler(w, request)
+			PostHandler(w, request)
 
 			res := w.Result()
 			err := res.Body.Close()

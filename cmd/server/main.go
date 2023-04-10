@@ -4,15 +4,18 @@ import (
 	"net/http"
 
 	"github.com/Hauve/metricservice.git/internal/handlers"
+	"github.com/go-chi/chi/v5"
 )
 
 func main() {
-	mux := http.NewServeMux()
-	mux.HandleFunc("/update/", handlers.UpdateHandler)
-	mux.Handle("/", http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-		writer.WriteHeader(http.StatusNotFound)
-	}))
-	err := http.ListenAndServe(":8080", mux)
+
+	r := chi.NewRouter()
+
+	r.Get("/value/{metricType}/{metricName}", handlers.GetHandler)
+	r.Get("/", handlers.GetAllHandler)
+	r.Post("/update/{metricType}/{metricName}/{metricValue}", handlers.PostHandler)
+
+	err := http.ListenAndServe(":8080", r)
 	if err != nil {
 		panic("Listen and serve failed!")
 	}
