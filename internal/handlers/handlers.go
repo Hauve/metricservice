@@ -10,9 +10,26 @@ import (
 	"time"
 )
 
-var MyMemStorage = storage.NewMemStorage()
+type Storage interface {
+	SetGauge(key string, val float64)
+	GetGauge(key string) (value float64, ok bool)
+	SetCounter(key string, val int64)
+	GetCounter(key string) (value int64, ok bool)
+	GetGaugeKeys() *[]string
+	GetCounterKeys() *[]string
+}
 
-func PostHandler(w http.ResponseWriter, r *http.Request) {
+type Service struct {
+	MyMemStorage Storage
+}
+
+func New() *Service {
+	return &Service{
+		storage.NewMemStorage(),
+	}
+}
+
+func (s *Service) PostHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("PostHandlerStarted")
 	header := w.Header()
 	header.Set("Content-Type", "text/plain; charset=utf-8")
@@ -49,7 +66,7 @@ func PostHandler(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
-		MyMemStorage.SetGauge(name, valFloat)
+		s.MyMemStorage.SetGauge(name, valFloat)
 
 	case storage.Counter:
 		valInt, err := strconv.ParseInt(val, 10, 64)
@@ -57,7 +74,7 @@ func PostHandler(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
-		MyMemStorage.SetCounter(name, valInt)
+		s.MyMemStorage.SetCounter(name, valInt)
 
 	default:
 		w.WriteHeader(http.StatusNotFound)
@@ -65,7 +82,7 @@ func PostHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func GetHandler(w http.ResponseWriter, r *http.Request) {
+func (s *Service) GetHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("GetHandlerStarted")
 	header := w.Header()
 	header.Set("Content-Type", "text/plain; charset=utf-8")
@@ -77,7 +94,7 @@ func GetHandler(w http.ResponseWriter, r *http.Request) {
 	var resValue string
 	switch metricType {
 	case storage.Gauge:
-		val, ok := MyMemStorage.GetGauge(metricName)
+		val, ok := s.MyMemStorage.GetGauge(metricName)
 		if !ok {
 			w.WriteHeader(http.StatusNotFound)
 			return
@@ -87,7 +104,7 @@ func GetHandler(w http.ResponseWriter, r *http.Request) {
 			resValue, _ = strings.CutSuffix(resValue, "0")
 		}
 	case storage.Counter:
-		val, ok := MyMemStorage.GetCounter(metricName)
+		val, ok := s.MyMemStorage.GetCounter(metricName)
 		if !ok {
 			w.WriteHeader(http.StatusNotFound)
 			return
@@ -103,7 +120,7 @@ func GetHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func GetAllHandler(w http.ResponseWriter, _ *http.Request) {
+func (s *Service) GetAllHandler(w http.ResponseWriter, _ *http.Request) {
 	fmt.Println("GetAllHandlerStarted")
 
 	header := w.Header()
@@ -118,18 +135,18 @@ func GetAllHandler(w http.ResponseWriter, _ *http.Request) {
 						</head>
 						<body>`
 
-	gaugeKeys := MyMemStorage.GetGaugeKeys()
+	gaugeKeys := s.MyMemStorage.GetGaugeKeys()
 	result := "Gauge [keys] = values: <br>"
 	for _, gaugeKey := range *gaugeKeys {
-		value, _ := MyMemStorage.GetGauge(gaugeKey)
+		value, _ := s.MyMemStorage.GetGauge(gaugeKey)
 		localRes := fmt.Sprintf("[%s] = %f<br>", gaugeKey, value)
 		result += localRes
 	}
 	result += "<br><br>Counters [keys] = values:<br>"
 
-	counterKeys := MyMemStorage.GetCounterKeys()
+	counterKeys := s.MyMemStorage.GetCounterKeys()
 	for _, counterKey := range *counterKeys {
-		value, _ := MyMemStorage.GetCounter(counterKey)
+		value, _ := s.MyMemStorage.GetCounter(counterKey)
 		localRes := fmt.Sprintf("[%s] = %d<br>", counterKey, value)
 		result += localRes
 	}
