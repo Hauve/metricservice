@@ -127,7 +127,7 @@ func (s *Service) GetAllHandler(w http.ResponseWriter, _ *http.Request) {
 	header.Set("Content-Type", "text/html; charset=utf-8")
 	header.Set("Date", time.Now().String())
 
-	templateHtml := `<!DOCTYPE html>
+	templateHTML := `<!DOCTYPE html>
 					<html>
 						 <head> 
 							<meta charset="UTF-8">
@@ -151,11 +151,11 @@ func (s *Service) GetAllHandler(w http.ResponseWriter, _ *http.Request) {
 		result += localRes
 	}
 
-	templateHtml += result
-	templateHtml += `	</body>
+	templateHTML += result
+	templateHTML += `	</body>
 					</html>`
 
-	_, err := w.Write([]byte(templateHtml))
+	_, err := w.Write([]byte(templateHTML))
 	if err != nil {
 		return
 	}
