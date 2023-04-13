@@ -36,10 +36,10 @@ func New() *MyAgent {
 }
 
 func (ag *MyAgent) Run() {
-	dur := fmt.Sprintf("%d", ag.pollInterval)
+	dur := fmt.Sprintf("%ds", ag.pollInterval)
 	duration, err := time.ParseDuration(dur)
 	if err != nil {
-		log.Fatalf("%e", err)
+		log.Printf("%e", err)
 	}
 	go ag.sendMetrics()
 	for {
@@ -92,7 +92,7 @@ func (ag *MyAgent) collectMetrics() {
 }
 
 func (ag *MyAgent) sendMetrics() {
-	dur := fmt.Sprintf("%d", ag.reportInterval)
+	dur := fmt.Sprintf("%ds", ag.reportInterval)
 	duration, err := time.ParseDuration(dur)
 	if err != nil {
 		log.Printf("%e", err)

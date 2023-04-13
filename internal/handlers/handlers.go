@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/Hauve/metricservice.git/internal/storage"
 	"github.com/go-chi/chi/v5"
+	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -34,11 +35,6 @@ func (s *Service) PostHandler(w http.ResponseWriter, r *http.Request) {
 	header := w.Header()
 	header.Set("Content-Type", "text/plain; charset=utf-8")
 	header.Set("Date", time.Now().String())
-	if r.Method != http.MethodPost {
-		// разрешаем только POST-запросы
-		w.WriteHeader(http.StatusMethodNotAllowed)
-		return
-	}
 
 	path := r.URL.Path
 	path = strings.TrimPrefix(path, "/update/")
@@ -127,19 +123,14 @@ func (s *Service) GetAllHandler(w http.ResponseWriter, _ *http.Request) {
 	header.Set("Content-Type", "text/html; charset=utf-8")
 	header.Set("Date", time.Now().String())
 
-	templateHTML := `<!DOCTYPE html>
-					<html>
-						 <head> 
-							<meta charset="UTF-8">
-							<title>Metrics</title>
-						</head>
-						<body>`
+	templateHTML := `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Metrics</title></head><body>`
 
 	gaugeKeys := s.MyMemStorage.GetGaugeKeys()
 	result := "Gauge [keys] = values: <br>"
 	for _, gaugeKey := range *gaugeKeys {
 		value, _ := s.MyMemStorage.GetGauge(gaugeKey)
-		localRes := fmt.Sprintf("[%s] = %f<br>", gaugeKey, value)
+		val := removeZeroes(fmt.Sprintf("%f", value))
+		localRes := fmt.Sprintf("[%s] = %s<br>", gaugeKey, val)
 		result += localRes
 	}
 	result += "<br><br>Counters [keys] = values:<br>"
@@ -147,7 +138,8 @@ func (s *Service) GetAllHandler(w http.ResponseWriter, _ *http.Request) {
 	counterKeys := s.MyMemStorage.GetCounterKeys()
 	for _, counterKey := range *counterKeys {
 		value, _ := s.MyMemStorage.GetCounter(counterKey)
-		localRes := fmt.Sprintf("[%s] = %d<br>", counterKey, value)
+		val := removeZeroes(fmt.Sprintf("%d", value))
+		localRes := fmt.Sprintf("[%s] = %s<br>", counterKey, val)
 		result += localRes
 	}
 
@@ -157,6 +149,13 @@ func (s *Service) GetAllHandler(w http.ResponseWriter, _ *http.Request) {
 
 	_, err := w.Write([]byte(templateHTML))
 	if err != nil {
-		return
+		log.Printf("%e", err)
 	}
+}
+
+func removeZeroes(a string) string {
+	for strings.HasSuffix(a, "0") {
+		a = strings.TrimSuffix(a, "0")
+	}
+	return a
 }
