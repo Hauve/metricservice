@@ -101,7 +101,7 @@ func (s *Service) GetHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		resValue = fmt.Sprintf("%f", val)
 		for strings.HasSuffix(resValue, "0") {
-			resValue, _ = strings.CutSuffix(resValue, "0")
+			resValue = strings.TrimSuffix(resValue, "0")
 		}
 	case storage.Counter:
 		val, ok := s.MyMemStorage.GetCounter(metricName)
