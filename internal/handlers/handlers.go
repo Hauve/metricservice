@@ -48,7 +48,7 @@ func (s *Service) PostHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
-
+	log.Println(requestURI)
 	metricType := pathArgs[0]
 	metricName := pathArgs[1]
 	metricValue := pathArgs[2]

@@ -15,7 +15,9 @@ import (
 type MyAgent struct {
 	storage handlers.Storage
 
-	address        string
+	address string
+	//reportInterval time.Duration
+	//pollInterval   time.Duration
 	reportInterval int
 	pollInterval   int
 }
@@ -28,27 +30,37 @@ func New() *MyAgent {
 	flag.Parse()
 
 	return &MyAgent{
-		storage:        storage.NewMemStorage(),
-		address:        *address,
+		storage: storage.NewMemStorage(),
+		address: *address,
+		//reportInterval: time.Duration(*reportInterval) * time.Second,
+		//pollInterval:   time.Duration(*pollInterval) * time.Second,
 		reportInterval: *reportInterval,
 		pollInterval:   *pollInterval,
 	}
 }
 
 func (ag *MyAgent) Run() {
-	dur := fmt.Sprintf("%ds", ag.pollInterval)
-	duration, err := time.ParseDuration(dur)
-	if err != nil {
-		log.Printf("%e", err)
-	}
-	go ag.sendMetrics()
+	report := 0
+	poll := 0
+
 	for {
-		time.Sleep(duration * time.Second)
-		ag.collectMetrics()
+		if poll%ag.pollInterval == 0 {
+			ag.collectMetrics()
+			poll = 0
+		}
+		if report%ag.reportInterval == 0 {
+			ag.sendMetrics()
+			report = 0
+		}
+
+		time.Sleep(time.Second)
+		report++
+		poll++
 	}
 }
 
 func (ag *MyAgent) collectMetrics() {
+	log.Println("Collecting metrics")
 	stats := runtime.MemStats{}
 	runtime.ReadMemStats(&stats)
 	ag.storage.SetGauge("Alloc", float64(stats.Alloc))
@@ -84,6 +96,12 @@ func (ag *MyAgent) collectMetrics() {
 
 	ag.storage.SetCounter("PollCount", 1)
 
+	res := make(map[string]float64)
+	keys := ag.storage.GetGaugeKeys()
+	for _, key := range *keys {
+		res[key], _ = ag.storage.GetGauge(key)
+	}
+	log.Printf("%v\n", res)
 }
 
 func (ag *MyAgent) sendMetrics() {
@@ -93,8 +111,9 @@ func (ag *MyAgent) sendMetrics() {
 		log.Printf("%e", err)
 	}
 
+	//time.Sleep(50 * time.Millisecond)
 	for {
-		time.Sleep(duration)
+		log.Println("Sending...")
 		gaugeNames := ag.storage.GetGaugeKeys()
 		for _, name := range *gaugeNames {
 			value, _ := ag.storage.GetGauge(name)
@@ -108,6 +127,8 @@ func (ag *MyAgent) sendMetrics() {
 			val := fmt.Sprintf("%d", value)
 			ag.sendMetric(name, val, storage.Gauge)
 		}
+		log.Println("Metrics sent")
+		time.Sleep(duration)
 	}
 }
 
