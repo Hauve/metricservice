@@ -6,7 +6,6 @@ import (
 	"github.com/go-chi/chi/v5"
 	"log"
 	"net/http"
-	"os"
 )
 
 type MyServer struct {
@@ -16,15 +15,8 @@ type MyServer struct {
 }
 
 func New(service handlers.Service) *MyServer {
-	var address *string
-	addrEnv, ok := os.LookupEnv("ADDRESS")
-	if !ok {
-		address = flag.String("a", "localhost:8080", "address")
-		flag.Parse()
-	} else {
-		address = &addrEnv
-	}
-
+	address := flag.String("a", "localhost:8080", "address")
+	flag.Parse()
 	log.Println(*address)
 	return &MyServer{
 		service: service,

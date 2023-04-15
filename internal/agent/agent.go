@@ -8,9 +8,7 @@ import (
 	"log"
 	"math/rand"
 	"net/http"
-	"os"
 	"runtime"
-	"strconv"
 	"time"
 )
 
@@ -25,45 +23,11 @@ type MyAgent struct {
 }
 
 func New() *MyAgent {
+	address := flag.String("a", "localhost:8080", "address")
+	reportInterval := flag.Int("r", 10, "Report interval in seconds")
+	pollInterval := flag.Int("p", 2, "Poll interval in seconds")
 
-	var address *string
-	addrEnv, ok := os.LookupEnv("ADDRESS")
-	if !ok {
-		address = flag.String("a", "localhost:8080", "address")
-		flag.Parse()
-	} else {
-		address = &addrEnv
-	}
-
-	var reportInterval *int
-	addrEnv, ok = os.LookupEnv("REPORT_INTERVAL")
-	if ok {
-		temp, err := strconv.Atoi(addrEnv)
-		if err != nil {
-			log.Printf("%e\n", err)
-			ok = !ok
-		}
-		reportInterval = &temp
-	}
-	if !ok {
-		reportInterval = flag.Int("r", 10, "Report interval in seconds")
-		flag.Parse()
-	}
-
-	var pollInterval *int
-	addrEnv, ok = os.LookupEnv("POLL_INTERVAL")
-	if ok {
-		temp, err := strconv.Atoi(addrEnv)
-		if err != nil {
-			log.Printf("%e\n", err)
-			ok = !ok
-		}
-		pollInterval = &temp
-	}
-	if !ok {
-		pollInterval = flag.Int("p", 2, "Poll interval in seconds")
-		flag.Parse()
-	}
+	flag.Parse()
 
 	return &MyAgent{
 		storage: storage.NewMemStorage(),
