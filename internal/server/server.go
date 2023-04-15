@@ -4,8 +4,8 @@ import (
 	"flag"
 	"github.com/Hauve/metricservice.git/internal/handlers"
 	"github.com/go-chi/chi/v5"
-	"log"
 	"net/http"
+	"os"
 )
 
 type MyServer struct {
@@ -17,7 +17,12 @@ type MyServer struct {
 func New(service handlers.Service) *MyServer {
 	address := flag.String("a", "localhost:8080", "address")
 	flag.Parse()
-	log.Println(*address)
+
+	addrEnv, ok := os.LookupEnv("ADDRESS")
+	if ok {
+		*address = addrEnv
+	}
+
 	return &MyServer{
 		service: service,
 		address: *address,
