@@ -82,12 +82,7 @@ func (ag *MyAgent) collectMetrics() {
 
 	ag.storage.SetGauge("RandomValue", rand.Float64())
 
-	pollCount, ok := ag.storage.GetCounter("PollCount")
-	if !ok {
-		ag.storage.SetCounter("PoolCount", 1)
-		return
-	}
-	ag.storage.SetCounter("PollCount", pollCount)
+	ag.storage.SetCounter("PollCount", 1)
 
 }
 
@@ -136,5 +131,9 @@ func (ag *MyAgent) sendMetric(name string, value string, mt storage.MetricType) 
 	if err != nil {
 		log.Printf("An Error Occured %v\n", err)
 		return
+	}
+
+	if name == "PoolCount" {
+		ag.storage.NullCounterValue("PoolCount")
 	}
 }

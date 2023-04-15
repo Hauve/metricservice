@@ -3,7 +3,6 @@ package handlers
 import (
 	"fmt"
 	"github.com/Hauve/metricservice.git/internal/storage"
-	"github.com/go-chi/chi/v5"
 	"log"
 	"net/http"
 	"strconv"
@@ -18,6 +17,7 @@ type Storage interface {
 	GetCounter(key string) (value int64, ok bool)
 	GetGaugeKeys() *[]string
 	GetCounterKeys() *[]string
+	NullCounterValue(key string)
 }
 
 type Service struct {
@@ -31,61 +31,72 @@ func New() *Service {
 }
 
 func (s *Service) PostHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("PostHandlerStarted")
+	log.Println("PostHandlerStarted")
 	header := w.Header()
 	header.Set("Content-Type", "text/plain; charset=utf-8")
 	header.Set("Date", time.Now().String())
 
-	path := r.URL.Path
-	path = strings.TrimPrefix(path, "/update/")
-	pathParts := strings.Split(path, "/")
+	if r.Method != http.MethodPost {
+		// разрешаем только POST-запросы
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		return
+	}
 
-	if len(pathParts) != 3 {
+	requestURI := strings.TrimPrefix(r.RequestURI, "/update/")
+	pathArgs := strings.Split(requestURI, "/")
+	if len(pathArgs) != 3 {
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
 
-	if pathParts[0] != storage.Gauge &&
-		pathParts[0] != storage.Counter {
-		w.WriteHeader(http.StatusNotImplemented)
-		return
-	}
+	metricType := pathArgs[0]
+	metricName := pathArgs[1]
+	metricValue := pathArgs[2]
 
-	metric := strings.ToLower(pathParts[0])
-	name := pathParts[1]
-	val := pathParts[2]
-
-	switch metric {
+	switch metricType {
 	case storage.Gauge:
-		valFloat, err := strconv.ParseFloat(val, 64)
+		valFloat, err := strconv.ParseFloat(metricValue, 64)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
-		s.MyMemStorage.SetGauge(name, valFloat)
+		s.MyMemStorage.SetGauge(metricName, valFloat)
 
 	case storage.Counter:
-		valInt, err := strconv.ParseInt(val, 10, 64)
+		valInt, err := strconv.ParseInt(metricValue, 10, 64)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
-		s.MyMemStorage.SetCounter(name, valInt)
+		s.MyMemStorage.SetCounter(metricName, valInt)
 
 	default:
-		w.WriteHeader(http.StatusNotFound)
+		w.WriteHeader(http.StatusNotImplemented)
 		return
 	}
 }
 
 func (s *Service) GetHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("GetHandlerStarted")
+	log.Println("GetHandlerStarted")
 	header := w.Header()
 	header.Set("Content-Type", "text/plain; charset=utf-8")
 	header.Set("Date", time.Now().String())
 
-	metricType := chi.URLParam(r, "metricType")
-	metricName := chi.URLParam(r, "metricName")
+	if r.Method != http.MethodGet {
+		// разрешаем только POST-запросы
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		return
+	}
+
+	requestURI := strings.TrimPrefix(r.RequestURI, "/value/")
+	pathArgs := strings.Split(requestURI, "/")
+	if len(pathArgs) != 2 {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+
+	metricType := pathArgs[0]
+	metricName := pathArgs[1]
 
 	var resValue string
 	switch metricType {
@@ -117,7 +128,7 @@ func (s *Service) GetHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Service) GetAllHandler(w http.ResponseWriter, _ *http.Request) {
-	fmt.Println("GetAllHandlerStarted")
+	log.Println("GetAllHandlerStarted")
 
 	header := w.Header()
 	header.Set("Content-Type", "text/html; charset=utf-8")

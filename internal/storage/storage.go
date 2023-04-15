@@ -62,3 +62,7 @@ func (st *MemStorage) GetCounterKeys() *[]string {
 	}
 	return &keys
 }
+
+func (st *MemStorage) NullCounterValue(key string) {
+	st.counter[key] = 0
+}
