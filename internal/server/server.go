@@ -4,6 +4,7 @@ import (
 	"flag"
 	"github.com/Hauve/metricservice.git/internal/handlers"
 	"github.com/go-chi/chi/v5"
+	"log"
 	"net/http"
 )
 
@@ -14,10 +15,12 @@ type MyServer struct {
 }
 
 func New(service handlers.Service) *MyServer {
-
+	address := flag.String("a", "localhost:8080", "address")
+	flag.Parse()
+	log.Println(*address)
 	return &MyServer{
 		service: service,
-		address: getAddress(),
+		address: *address,
 	}
 }
 
@@ -34,10 +37,4 @@ func (serv *MyServer) Run() {
 	if err != nil {
 		panic("Listen and serve failed!")
 	}
-}
-
-func getAddress() string {
-	address := flag.String("a", "localhost:8080", "address")
-	flag.Parse()
-	return *address
 }
