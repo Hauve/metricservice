@@ -60,31 +60,3 @@ func TestMyAgent_collectMetrics(t *testing.T) {
 	})
 
 }
-
-func TestMyAgent_sendMetric(t *testing.T) {
-	type fields struct {
-		storage handlers.Storage
-		address string
-	}
-	type args struct {
-		name  string
-		value string
-		mt    storage.MetricType
-	}
-	tests := []struct {
-		name   string
-		fields fields
-		args   args
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			ag := &MyAgent{
-				storage: tt.fields.storage,
-				address: tt.fields.address,
-			}
-			ag.sendMetric(tt.args.name, tt.args.value, tt.args.mt)
-		})
-	}
-}
