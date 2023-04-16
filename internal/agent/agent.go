@@ -121,12 +121,12 @@ func (ag *MyAgent) collectMetrics() {
 
 	ag.storage.SetCounter("PollCount", 1)
 
-	res := make(map[string]float64)
-	keys := ag.storage.GetGaugeKeys()
-	for _, key := range *keys {
-		res[key], _ = ag.storage.GetGauge(key)
-	}
-	log.Printf("%v\n", res)
+	//res := make(map[string]float64)
+	//keys := ag.storage.GetGaugeKeys()
+	//for _, key := range *keys {
+	//	res[key], _ = ag.storage.GetGauge(key)
+	//}
+	//log.Printf("%v\n", keys)
 }
 
 func (ag *MyAgent) sendMetrics() {

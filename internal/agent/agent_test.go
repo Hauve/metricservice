@@ -1,8 +1,11 @@
 package agent
 
 import (
+	"github.com/Hauve/metricservice.git/internal/handlers"
 	"github.com/Hauve/metricservice.git/internal/storage"
+	"github.com/stretchr/testify/assert"
 	"reflect"
+	"strings"
 	"testing"
 )
 
@@ -24,4 +27,64 @@ func TestNew(t *testing.T) {
 			t.Errorf("New() = %v, want %v", got, tt.want)
 		}
 	})
+}
+
+// BAD TEST
+func TestMyAgent_collectMetrics(t *testing.T) {
+	type fields struct {
+		storage handlers.Storage
+	}
+	tt := struct {
+		name   string
+		fields fields
+	}{
+		name: "Single test",
+		fields: fields{
+			storage: storage.NewMemStorage(),
+		},
+	}
+
+	t.Run(tt.name, func(t *testing.T) {
+		ag := &MyAgent{
+			storage: tt.fields.storage,
+		}
+		ag.collectMetrics()
+
+		gotGaugeKeys := ag.storage.GetGaugeKeys()
+		temp := "HeapAlloc HeapSys MSpanInuse GCCPUFraction StackInuse GCSys MSpanSys Mallocs OtherSys HeapIdle HeapInuse HeapObjects NumForcedGC PauseTotalNs Sys Alloc Frees LastGC NumGC StackSys RandomValue Lookups MCacheInuse MCacheSys NextGC BuckHashSys HeapReleased"
+		mustGaugeKeys := strings.Split(temp, " ")
+
+		for _, must := range mustGaugeKeys {
+			assert.Contains(t, *gotGaugeKeys, must, "Value that must be in storage is missed")
+		}
+	})
+
+}
+
+func TestMyAgent_sendMetric(t *testing.T) {
+	type fields struct {
+		storage handlers.Storage
+		address string
+	}
+	type args struct {
+		name  string
+		value string
+		mt    storage.MetricType
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ag := &MyAgent{
+				storage: tt.fields.storage,
+				address: tt.fields.address,
+			}
+			ag.sendMetric(tt.args.name, tt.args.value, tt.args.mt)
+		})
+	}
 }
