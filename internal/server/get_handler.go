@@ -6,6 +6,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -25,6 +26,9 @@ func (s *MyServer) GetHandler(w http.ResponseWriter, r *http.Request) {
 		var val float64
 		val, isMetricFound = s.storage.GetGauge(metricName)
 		metricValue = fmt.Sprintf("%f", val)
+		if strings.HasSuffix(metricValue, "0") {
+			metricValue = strings.TrimSuffix(metricValue, "0")
+		}
 	case storage.Counter:
 		var val int64
 		val, isMetricFound = s.storage.GetCounter(metricName)
