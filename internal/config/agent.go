@@ -16,7 +16,7 @@ type AgentConfig struct {
 
 func LoadAgentConfig() (*AgentConfig, error) {
 	address := flag.String("a", "localhost:8080", "address")
-	reportInterval := flag.Int("r", 3, "Report interval in seconds")
+	reportInterval := flag.Int("r", 10, "Report interval in seconds")
 	pollInterval := flag.Int("p", 2, "Poll interval in seconds")
 	flag.Parse()
 

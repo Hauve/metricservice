@@ -26,7 +26,7 @@ func (s *MyServer) GetHandler(w http.ResponseWriter, r *http.Request) {
 		var val float64
 		val, isMetricFound = s.storage.GetGauge(metricName)
 		metricValue = fmt.Sprintf("%f", val)
-		if strings.HasSuffix(metricValue, "0") {
+		for strings.HasSuffix(metricValue, "0") {
 			metricValue = strings.TrimSuffix(metricValue, "0")
 		}
 	case storage.Counter:
