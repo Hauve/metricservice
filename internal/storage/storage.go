@@ -8,10 +8,10 @@ const (
 type Storage interface {
 	SetGauge(key string, val float64)
 	GetGauge(key string) (value float64, ok bool)
-	SetCounter(key string, val int64)
+	AddCounter(key string, val int64)
 	GetCounter(key string) (value int64, ok bool)
-	GetGaugeKeys() *[]string
-	GetCounterKeys() *[]string
+	GetGaugeKeys() []string
+	GetCounterKeys() []string
 	NullCounterValue(key string)
 }
 

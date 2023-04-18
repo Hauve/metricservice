@@ -44,5 +44,5 @@ func (ag *MyAgent) collectRuntimeMetrics() {
 }
 func (ag *MyAgent) collectSystemMetrics() {
 	ag.storage.SetGauge("RandomValue", rand.Float64())
-	ag.storage.SetCounter("PollCount", 1)
+	ag.storage.AddCounter("PollCount", 1)
 }

@@ -2,27 +2,27 @@ package agent
 
 import (
 	"github.com/Hauve/metricservice.git/internal/config"
-	"github.com/Hauve/metricservice.git/internal/processor"
+	"github.com/Hauve/metricservice.git/internal/sender"
 	"github.com/Hauve/metricservice.git/internal/storage"
 	"log"
 	"time"
 )
 
 type MyAgent struct {
-	cfg             *config.AgentConfig
-	storage         storage.Storage
-	metricProcessor processor.MetricProcessor
+	cfg     *config.AgentConfig
+	storage storage.Storage
+	sender  *sender.Sender
 }
 
 func New(
 	cfg *config.AgentConfig,
-	processor processor.MetricProcessor,
 	storage storage.Storage,
+	sender *sender.Sender,
 ) *MyAgent {
 	return &MyAgent{
-		cfg:             cfg,
-		storage:         storage,
-		metricProcessor: processor,
+		cfg:     cfg,
+		storage: storage,
+		sender:  sender,
 	}
 }
 

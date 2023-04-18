@@ -26,7 +26,7 @@ func (st *MemStorage) GetGauge(key string) (value float64, ok bool) {
 	return val, true
 }
 
-func (st *MemStorage) SetCounter(key string, val int64) {
+func (st *MemStorage) AddCounter(key string, val int64) {
 	st.counter[key] = val + st.counter[key]
 }
 
@@ -38,22 +38,22 @@ func (st *MemStorage) GetCounter(key string) (value int64, ok bool) {
 	return val, true
 }
 
-func (st *MemStorage) GetGaugeKeys() *[]string {
+func (st *MemStorage) GetGaugeKeys() []string {
 	keys := make([]string, 0)
 	for key := range st.gauge {
 		key = strings.TrimSpace(key)
 		keys = append(keys, key)
 	}
-	return &keys
+	return keys
 }
 
-func (st *MemStorage) GetCounterKeys() *[]string {
+func (st *MemStorage) GetCounterKeys() []string {
 	keys := make([]string, 0)
 	for key := range st.counter {
 		key = strings.TrimSpace(key)
 		keys = append(keys, key)
 	}
-	return &keys
+	return keys
 }
 
 func (st *MemStorage) NullCounterValue(key string) {

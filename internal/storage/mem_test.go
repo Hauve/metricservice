@@ -96,7 +96,7 @@ func TestMemStorage_GetCounterKeys(t *testing.T) {
 			if got := st.GetCounterKeys(); !reflect.DeepEqual(got, tt.want) {
 				//GetGaugeKeys не гарантирует определённый порядок элементов
 				equal := false
-				for gotKey := range *got {
+				for gotKey := range got {
 					for wantKey := range *tt.want {
 						if gotKey == wantKey {
 							equal = true
@@ -205,7 +205,7 @@ func TestMemStorage_GetGaugeKeys(t *testing.T) {
 			if got := st.GetGaugeKeys(); !reflect.DeepEqual(got, tt.want) {
 				//GetGaugeKeys не гарантирует определённый порядок элементов
 				equal := false
-				for gotKey := range *got {
+				for gotKey := range got {
 					for wantKey := range *tt.want {
 						if gotKey == wantKey {
 							equal = true
@@ -256,7 +256,7 @@ func TestMemStorage_SetCounter(t *testing.T) {
 				gauge:   tt.fields.gauge,
 				counter: tt.fields.counter,
 			}
-			st.SetCounter(tt.args.key, tt.args.val)
+			st.AddCounter(tt.args.key, tt.args.val)
 		})
 	}
 }
@@ -298,19 +298,3 @@ func TestMemStorage_SetGauge(t *testing.T) {
 		})
 	}
 }
-
-//func TestNewMemStorage(t *testing.T) {
-//	tests := []struct {
-//		name string
-//		want *MemStorage
-//	}{
-//		// TODO: Add test cases.
-//	}
-//	for _, tt := range tests {
-//		t.Run(tt.name, func(t *testing.T) {
-//			if got := NewMemStorage(); !reflect.DeepEqual(got, tt.want) {
-//				t.Errorf("NewMemStorage() = %v, want %v", got, tt.want)
-//			}
-//		})
-//	}
-//}

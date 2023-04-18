@@ -1,4 +1,4 @@
-package processor
+package sender
 
 import (
 	"fmt"
@@ -7,19 +7,19 @@ import (
 	"net/http"
 )
 
-type sender struct {
+type Sender struct {
 	cfg    *config.AgentConfig
 	client *http.Client
 }
 
-func NewSender(cfg *config.AgentConfig) *sender {
-	return &sender{
+func NewSender(cfg *config.AgentConfig) *Sender {
+	return &Sender{
 		cfg:    cfg,
 		client: &http.Client{},
 	}
 }
 
-func (m *sender) Process(name, value string, mt storage.MetricType) error {
+func (m *Sender) Send(name, value string, mt storage.MetricType) error {
 
 	url := fmt.Sprintf("http://%s/update/%s/%s/%s", m.cfg.Address, mt, name, value)
 
