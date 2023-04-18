@@ -1,185 +1,43 @@
 package agent
 
 import (
-	"flag"
-	"fmt"
-	"github.com/Hauve/metricservice.git/internal/handlers"
+	"github.com/Hauve/metricservice.git/internal/config"
+	"github.com/Hauve/metricservice.git/internal/processor"
 	"github.com/Hauve/metricservice.git/internal/storage"
 	"log"
-	"math/rand"
-	"net/http"
-	"os"
-	"runtime"
-	"strconv"
 	"time"
 )
 
 type MyAgent struct {
-	storage handlers.Storage
-
-	address string
-	//reportInterval time.Duration
-	//pollInterval   time.Duration
-	reportInterval int
-	pollInterval   int
+	cfg             *config.AgentConfig
+	storage         storage.Storage
+	metricProcessor processor.MetricProcessor
 }
 
-func New() *MyAgent {
-	address := flag.String("a", "localhost:8080", "address")
-	reportInterval := flag.Int("r", 10, "Report interval in seconds")
-	pollInterval := flag.Int("p", 2, "Poll interval in seconds")
-	flag.Parse()
-
-	addrEnv, ok := os.LookupEnv("ADDRESS")
-	if ok {
-		*address = addrEnv
-	}
-	repEnv, ok := os.LookupEnv("REPORT_INTERVAL")
-	if ok {
-		temp, err := strconv.Atoi(repEnv)
-		if err != nil {
-			log.Printf("%e", err)
-		} else {
-			*reportInterval = temp
-		}
-	}
-
-	pollEnv, ok := os.LookupEnv("POLL_INTERVAL")
-	if ok {
-		temp, err := strconv.Atoi(pollEnv)
-		if err != nil {
-			log.Printf("%e", err)
-		} else {
-			*pollInterval = temp
-		}
-	}
-
+func New(
+	cfg *config.AgentConfig,
+	processor processor.MetricProcessor,
+	storage storage.Storage,
+) *MyAgent {
 	return &MyAgent{
-		storage: storage.NewMemStorage(),
-		address: *address,
-		//reportInterval: time.Duration(*reportInterval) * time.Second,
-		//pollInterval:   time.Duration(*pollInterval) * time.Second,
-		reportInterval: *reportInterval,
-		pollInterval:   *pollInterval,
+		cfg:             cfg,
+		storage:         storage,
+		metricProcessor: processor,
 	}
 }
 
 func (ag *MyAgent) Run() {
-	report := 0
-	poll := 0
+	pollTicker := time.NewTicker(ag.cfg.PoolInterval)
+	reportTicker := time.NewTicker(ag.cfg.ReportInterval)
 
 	for {
-		if poll%ag.pollInterval == 0 {
+		select {
+		case <-pollTicker.C:
 			ag.collectMetrics()
-			poll = 0
+		case <-reportTicker.C:
+			if err := ag.sendMetrics(); err != nil {
+				log.Printf("cannot process metrics: %s", err)
+			}
 		}
-		if report%ag.reportInterval == 0 {
-			ag.sendMetrics()
-			report = 0
-		}
-
-		time.Sleep(time.Second)
-		report++
-		poll++
-	}
-}
-
-func (ag *MyAgent) collectMetrics() {
-	log.Println("Collecting metrics")
-	stats := runtime.MemStats{}
-	runtime.ReadMemStats(&stats)
-	ag.storage.SetGauge("Alloc", float64(stats.Alloc))
-	ag.storage.SetGauge("BuckHashSys", float64(stats.BuckHashSys))
-	ag.storage.SetGauge("Frees", float64(stats.Frees))
-	ag.storage.SetGauge("GCCPUFraction", stats.GCCPUFraction)
-	ag.storage.SetGauge("GCSys", float64(stats.GCSys))
-	ag.storage.SetGauge("HeapAlloc", float64(stats.HeapAlloc))
-	ag.storage.SetGauge("HeapIdle", float64(stats.HeapIdle))
-	ag.storage.SetGauge("HeapInuse", float64(stats.HeapInuse))
-	ag.storage.SetGauge("HeapObjects", float64(stats.HeapObjects))
-	ag.storage.SetGauge("HeapReleased", float64(stats.HeapReleased))
-	ag.storage.SetGauge("HeapSys", float64(stats.HeapSys))
-	ag.storage.SetGauge("LastGC", float64(stats.LastGC))
-	ag.storage.SetGauge("Lookups", float64(stats.Lookups))
-	ag.storage.SetGauge("MCacheInuse", float64(stats.MCacheInuse))
-	ag.storage.SetGauge("MCacheSys", float64(stats.MCacheSys))
-	ag.storage.SetGauge("MSpanInuse", float64(stats.MSpanInuse))
-	ag.storage.SetGauge("MSpanSys", float64(stats.MSpanSys))
-	ag.storage.SetGauge("Mallocs", float64(stats.Mallocs))
-	ag.storage.SetGauge("NextGC", float64(stats.NextGC))
-	ag.storage.SetGauge("NumForcedGC", float64(stats.NumForcedGC))
-	ag.storage.SetGauge("NumGC", float64(stats.NumGC))
-	ag.storage.SetGauge("OtherSys", float64(stats.OtherSys))
-	ag.storage.SetGauge("PauseTotalNs", float64(stats.PauseTotalNs))
-	ag.storage.SetGauge("StackInuse", float64(stats.StackInuse))
-	ag.storage.SetGauge("StackSys", float64(stats.StackSys))
-	ag.storage.SetGauge("Sys", float64(stats.Sys))
-	ag.storage.SetGauge("OtherSys", float64(stats.TotalAlloc))
-	ag.storage.SetGauge("RandomValue", float64(stats.TotalAlloc))
-
-	ag.storage.SetGauge("RandomValue", rand.Float64())
-
-	ag.storage.SetCounter("PollCount", 1)
-
-	//res := make(map[string]float64)
-	//keys := ag.storage.GetGaugeKeys()
-	//for _, key := range *keys {
-	//	res[key], _ = ag.storage.GetGauge(key)
-	//}
-	//log.Printf("%v\n", keys)
-}
-
-func (ag *MyAgent) sendMetrics() {
-	dur := fmt.Sprintf("%ds", ag.reportInterval)
-	duration, err := time.ParseDuration(dur)
-	if err != nil {
-		log.Printf("%e", err)
-	}
-
-	//time.Sleep(50 * time.Millisecond)
-	for {
-		log.Println("Sending...")
-		gaugeNames := ag.storage.GetGaugeKeys()
-		for _, name := range *gaugeNames {
-			value, _ := ag.storage.GetGauge(name)
-			val := fmt.Sprintf("%f", value)
-			ag.sendMetric(name, val, storage.Gauge)
-		}
-
-		counterNames := ag.storage.GetCounterKeys()
-		for _, name := range *counterNames {
-			value, _ := ag.storage.GetCounter(name)
-			val := fmt.Sprintf("%d", value)
-			ag.sendMetric(name, val, storage.Gauge)
-		}
-		log.Println("Metrics sent")
-		time.Sleep(duration)
-	}
-}
-
-func (ag *MyAgent) sendMetric(name string, value string, mt storage.MetricType) {
-	client := &http.Client{}
-	url := fmt.Sprintf("http://%s/update/%s/%s/%s", ag.address, mt, name, value)
-
-	req, err := http.NewRequest(http.MethodPost, url, nil)
-	if err != nil {
-		log.Printf("An Error Occured %v\n", err)
-		return
-	}
-	req.Header.Add("Content-Length", `0`)
-	req.Header.Add("Content-Type", `text/plain`)
-	resp, err := client.Do(req)
-	if err != nil {
-		log.Printf("An Error Occured %v\n", err)
-		return
-	}
-	err = resp.Body.Close()
-	if err != nil {
-		log.Printf("An Error Occured %v\n", err)
-		return
-	}
-
-	if name == "PoolCount" {
-		ag.storage.NullCounterValue("PoolCount")
 	}
 }
