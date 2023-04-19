@@ -9,7 +9,7 @@ type ServerConfig struct {
 	Address string
 }
 
-func LoadServertConfig() *ServerConfig {
+func LoadServerConfig() *ServerConfig {
 	address := flag.String("a", "localhost:8080", "address")
 	flag.Parse()
 

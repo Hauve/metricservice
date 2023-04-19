@@ -18,7 +18,10 @@ func (s *MyServer) GetHandler(w http.ResponseWriter, r *http.Request) {
 
 	metricType := chi.URLParam(r, "metricType")
 	metricName := chi.URLParam(r, "metricName")
-
+	log.Println(metricType)
+	log.Println(metricName)
+	log.Println(r.RequestURI)
+	log.Println("---")
 	var metricValue string
 	var isMetricFound bool
 	switch metricType {
