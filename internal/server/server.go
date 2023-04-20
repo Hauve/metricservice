@@ -11,27 +11,29 @@ import (
 type MyServer struct {
 	cfg     *config.ServerConfig
 	storage storage.Storage
+	router  chi.Router
 }
 
-func New(cfg *config.ServerConfig, storage storage.Storage) *MyServer {
+func New(cfg *config.ServerConfig, storage storage.Storage, router chi.Router) *MyServer {
 	return &MyServer{
 		cfg:     cfg,
 		storage: storage,
+		router:  router,
 	}
 }
 
 func (s *MyServer) Run() {
-
-	r := chi.NewRouter()
-
-	r.Get("/value/{metricType}/{metricName}", s.GetHandler)
-	r.Get("/value/{metricType}/{metricName}/", s.GetHandler)
-	r.Get("/", s.GetAllHandler)
-	r.Post("/update/{metricType}/{metricName}/{metricValue}", s.PostHandler)
-	r.Post("/update/{metricType}/{metricName}/{metricValue}/", s.PostHandler)
-
-	err := http.ListenAndServe(s.cfg.Address, r)
+	s.registerRoutes()
+	err := http.ListenAndServe(s.cfg.Address, s.router)
 	if err != nil {
 		log.Fatalf("cannot ListenAndServe: %s", err)
 	}
+}
+
+func (s *MyServer) registerRoutes() {
+	s.router.Get("/value/{metricType}/{metricName}", s.GetHandler)
+	s.router.Get("/value/{metricType}/{metricName}/", s.GetHandler)
+	s.router.Get("/", s.GetAllHandler)
+	s.router.Post("/update/{metricType}/{metricName}/{metricValue}", s.PostHandler)
+	s.router.Post("/update/{metricType}/{metricName}/{metricValue}/", s.PostHandler)
 }

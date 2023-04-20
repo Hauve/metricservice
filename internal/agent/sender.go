@@ -11,7 +11,7 @@ func (ag *MyAgent) sendMetrics() error {
 		value, _ := ag.storage.GetGauge(name)
 		val := fmt.Sprintf("%f", value)
 		if err := ag.sender.Send(name, val, storage.Gauge); err != nil {
-			return fmt.Errorf("cannot process counter metric: %w", err)
+			return fmt.Errorf("cannot send counter metric: %w", err)
 		}
 	}
 
@@ -20,7 +20,7 @@ func (ag *MyAgent) sendMetrics() error {
 		value, _ := ag.storage.GetCounter(name)
 		val := fmt.Sprintf("%d", value)
 		if err := ag.sender.Send(name, val, storage.Counter); err != nil {
-			return fmt.Errorf("cannot process counter metric: %w", err)
+			return fmt.Errorf("cannot send counter metric: %w", err)
 		}
 	}
 
