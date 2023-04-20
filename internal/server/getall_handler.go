@@ -35,7 +35,7 @@ func (s *MyServer) GetAllHandler(w http.ResponseWriter, _ *http.Request) {
 		data["counter"][key] = fmt.Sprintf("%d", value)
 	}
 
-	tmpl, err := template.New("test").Parse(htmlTmpl)
+	tmpl, err := template.New("metrics").Parse(htmlTmpl)
 	if err != nil {
 		log.Printf("cannot parse html template: %s", err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -44,5 +44,7 @@ func (s *MyServer) GetAllHandler(w http.ResponseWriter, _ *http.Request) {
 
 	if err = tmpl.Execute(w, data); err != nil {
 		log.Printf("cannot write content to the client: %s", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
 	}
 }

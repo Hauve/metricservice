@@ -24,7 +24,5 @@ func (ag *MyAgent) sendMetrics() error {
 		}
 	}
 
-	ag.storage.NullCounterValue("PollCount")
-
 	return nil
 }

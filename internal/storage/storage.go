@@ -12,7 +12,6 @@ type Storage interface {
 	GetCounter(key string) (value int64, ok bool)
 	GetGaugeKeys() []string
 	GetCounterKeys() []string
-	NullCounterValue(key string)
 }
 
 type MetricType = string
