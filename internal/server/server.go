@@ -2,6 +2,7 @@ package server
 
 import (
 	"github.com/Hauve/metricservice.git/internal/config"
+	"github.com/Hauve/metricservice.git/internal/logger"
 	"github.com/Hauve/metricservice.git/internal/storage"
 	"github.com/go-chi/chi/v5"
 	"log"
@@ -12,13 +13,15 @@ type MyServer struct {
 	cfg     *config.ServerConfig
 	storage storage.Storage
 	router  chi.Router
+	logger  logger.Logger
 }
 
-func New(cfg *config.ServerConfig, storage storage.Storage, router chi.Router) *MyServer {
+func New(cfg *config.ServerConfig, storage storage.Storage, router chi.Router, log *logger.Logger) *MyServer {
 	return &MyServer{
 		cfg:     cfg,
 		storage: storage,
 		router:  router,
+		logger:  *log,
 	}
 }
 
@@ -31,9 +34,9 @@ func (s *MyServer) Run() {
 }
 
 func (s *MyServer) registerRoutes() {
-	s.router.Get("/value/{metricType}/{metricName}", s.GetHandler)
-	s.router.Get("/value/{metricType}/{metricName}/", s.GetHandler)
-	s.router.Get("/", s.GetAllHandler)
-	s.router.Post("/update/{metricType}/{metricName}/{metricValue}", s.PostHandler)
-	s.router.Post("/update/{metricType}/{metricName}/{metricValue}/", s.PostHandler)
+	s.router.Get("/value/{metricType}/{metricName}", s.logger.WithLogging(s.GetHandler))
+	s.router.Get("/value/{metricType}/{metricName}/", s.logger.WithLogging(s.GetHandler))
+	s.router.Get("/", s.logger.WithLogging(s.GetAllHandler))
+	s.router.Post("/update/{metricType}/{metricName}/{metricValue}", s.logger.WithLogging(s.PostHandler))
+	s.router.Post("/update/{metricType}/{metricName}/{metricValue}/", s.logger.WithLogging(s.PostHandler))
 }
