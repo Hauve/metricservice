@@ -43,7 +43,7 @@ func (log Logger) WithLogging(h http.HandlerFunc) http.HandlerFunc {
 			"uri", r.RequestURI,
 			"method", r.Method,
 			"status", responseData.status,
-			"duration", duration,
+			"duration", duration*time.Millisecond,
 			"size", responseData.size,
 		)
 	}

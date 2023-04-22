@@ -2,6 +2,7 @@ package server
 
 import (
 	"github.com/Hauve/metricservice.git/internal/config"
+	"github.com/Hauve/metricservice.git/internal/logger"
 	"github.com/Hauve/metricservice.git/internal/storage"
 	"github.com/go-chi/chi/v5"
 	"github.com/stretchr/testify/assert"
@@ -53,12 +54,16 @@ func TestService_GetHandler(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			lg, err := logger.New()
+			require.NoError(t, err)
+
 			s := &MyServer{
 				cfg: &config.ServerConfig{
 					Address: "http://localhost:8080",
 				},
 				storage: storage.NewMemStorage(),
 				router:  chi.NewRouter(),
+				logger:  *lg,
 			}
 			s.storage.SetGauge("Key1", 25.1)
 			s.storage.AddCounter("Key1", 1)
@@ -135,12 +140,16 @@ func TestService_PostHandler(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			lg, err := logger.New()
+			require.NoError(t, err)
+
 			s := &MyServer{
 				cfg: &config.ServerConfig{
 					Address: "http://localhost:8080",
 				},
 				storage: storage.NewMemStorage(),
 				router:  chi.NewRouter(),
+				logger:  *lg,
 			}
 
 			s.registerRoutes()
@@ -181,7 +190,7 @@ func TestService_PostHandler(t *testing.T) {
 			}
 
 			//static test gives warning with closing through defer
-			err := res.Body.Close()
+			err = res.Body.Close()
 			if err != nil {
 				log.Printf("%e", err)
 			}

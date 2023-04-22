@@ -15,7 +15,7 @@ func main() {
 	r := chi.NewRouter()
 	lg, err := logger.New()
 	if err != nil {
-		log.Printf("Logger creating failed: %s", err)
+		log.Fatalf("Logger creating failed: %s", err)
 	}
 	serv := server.New(cfg, st, r, lg)
 	serv.Run()
