@@ -2,7 +2,7 @@ package server
 
 import (
 	"encoding/json"
-	"github.com/Hauve/metricservice.git/internal/json_model"
+	"github.com/Hauve/metricservice.git/internal/jsonmodel"
 	"github.com/Hauve/metricservice.git/internal/storage"
 	"io"
 	"log"
@@ -36,7 +36,7 @@ func (s *MyServer) JSONPostHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	data := json_model.Metrics{}
+	data := jsonmodel.Metrics{}
 	err = json.Unmarshal(buf, &data)
 	if err != nil {
 		log.Printf("ERROR: cannot unmarshal json: %s", err)

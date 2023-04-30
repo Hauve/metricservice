@@ -1,4 +1,4 @@
-package json_model
+package jsonmodel
 
 type Metrics struct {
 	ID    string   `json:"id"`              // имя метрики

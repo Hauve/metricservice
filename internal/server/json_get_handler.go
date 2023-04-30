@@ -2,7 +2,7 @@ package server
 
 import (
 	"encoding/json"
-	"github.com/Hauve/metricservice.git/internal/json_model"
+	"github.com/Hauve/metricservice.git/internal/jsonmodel"
 	"github.com/Hauve/metricservice.git/internal/storage"
 	"io"
 	"log"
@@ -36,7 +36,7 @@ func (s *MyServer) JSONGetHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	data := json_model.Metrics{}
+	data := jsonmodel.Metrics{}
 	err = json.Unmarshal(buf, &data)
 	if err != nil {
 		log.Printf("ERROR: cannot unmarshal json: %s", err)
@@ -58,10 +58,11 @@ func (s *MyServer) JSONGetHandler(w http.ResponseWriter, r *http.Request) {
 		val, isMetricFound = s.storage.GetCounter(metricName)
 		*data.Delta = val
 	}
-	if !isMetricFound {
-		w.WriteHeader(http.StatusNotFound)
-		return
-	}
+	//if !isMetricFound {
+	//	w.WriteHeader(http.StatusNotFound)
+	//	return
+	//}
+	_ = isMetricFound
 
 	buf, err = json.Marshal(data)
 	if err != nil {

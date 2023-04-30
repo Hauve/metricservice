@@ -5,13 +5,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/Hauve/metricservice.git/internal/config"
-	"github.com/Hauve/metricservice.git/internal/json_model"
+	"github.com/Hauve/metricservice.git/internal/jsonmodel"
 	"github.com/Hauve/metricservice.git/internal/storage"
 	"net/http"
 	"strconv"
 )
 
-type JsonSender struct {
+type JSONSender struct {
 	cfg    *config.AgentConfig
 	client *http.Client
 }
@@ -23,11 +23,11 @@ func NewJSONSender(cfg *config.AgentConfig) *Sender {
 	}
 }
 
-func (m *JsonSender) Send(name, value string, mt storage.MetricType) error {
+func (m *JSONSender) Send(name, value string, mt storage.MetricType) error {
 
 	url := fmt.Sprintf("http://%s/update/", m.cfg.Address)
 
-	jsonData := json_model.Metrics{
+	jsonData := jsonmodel.Metrics{
 		ID:    name,
 		MType: mt,
 	}
