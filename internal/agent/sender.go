@@ -23,6 +23,6 @@ func (ag *MyAgent) sendMetrics() error {
 			return fmt.Errorf("cannot send counter metric: %w", err)
 		}
 	}
-
+	ag.storage.SetCounter("PollCount", 0)
 	return nil
 }

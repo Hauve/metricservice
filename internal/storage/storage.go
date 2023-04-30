@@ -12,6 +12,8 @@ type Storage interface {
 	GetCounter(key string) (value int64, ok bool)
 	GetGaugeKeys() []string
 	GetCounterKeys() []string
+
+	SetCounter(key string, val int64)
 }
 
 type MetricType = string

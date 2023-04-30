@@ -55,3 +55,7 @@ func (st *MemStorage) GetCounterKeys() []string {
 	}
 	return keys
 }
+
+func (st *MemStorage) SetCounter(key string, val int64) {
+	st.counter[key] = val
+}
