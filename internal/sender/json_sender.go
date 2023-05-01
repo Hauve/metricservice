@@ -16,8 +16,8 @@ type JSONSender struct {
 	client *http.Client
 }
 
-func NewJSONSender(cfg *config.AgentConfig) *Sender {
-	return &Sender{
+func NewJSONSender(cfg *config.AgentConfig) *JSONSender {
+	return &JSONSender{
 		cfg:    cfg,
 		client: &http.Client{},
 	}

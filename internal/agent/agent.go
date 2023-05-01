@@ -11,10 +11,10 @@ import (
 type MyAgent struct {
 	cfg     *config.AgentConfig
 	storage storage.Storage
-	sender  *sender.Sender
+	sender  sender.Sender
 }
 
-func New(cfg *config.AgentConfig, storage storage.Storage, sender *sender.Sender) *MyAgent {
+func New(cfg *config.AgentConfig, storage storage.Storage, sender sender.Sender) *MyAgent {
 	return &MyAgent{
 		cfg:     cfg,
 		storage: storage,

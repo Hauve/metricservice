@@ -43,7 +43,7 @@ func (s *MyServer) registerRoutes() {
 	s.router.Post("/update", s.logger.WithLogging(s.JSONPostHandler))
 	s.router.Post("/update/", s.logger.WithLogging(s.JSONPostHandler))
 
-	s.router.Post("/value", s.logger.WithLogging(s.JSONGetHandler))
-	s.router.Post("/value/", s.logger.WithLogging(s.JSONGetHandler))
+	s.router.Post("/value", s.JSONGetHandler)
+	s.router.Post("/value/", s.JSONGetHandler)
 
 }
