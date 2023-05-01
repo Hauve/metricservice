@@ -1,6 +1,7 @@
 package server
 
 import (
+	"github.com/Hauve/metricservice.git/internal/compression"
 	"github.com/Hauve/metricservice.git/internal/config"
 	"github.com/Hauve/metricservice.git/internal/logger"
 	"github.com/Hauve/metricservice.git/internal/storage"
@@ -37,11 +38,11 @@ func (s *MyServer) registerRoutes() {
 	s.router.Get("/value/{metricType}/{metricName}", s.logger.WithLogging(s.GetHandler))
 	s.router.Get("/value/{metricType}/{metricName}/", s.logger.WithLogging(s.GetHandler))
 	s.router.Get("/", s.logger.WithLogging(s.GetAllHandler))
-	s.router.Post("/update/{metricType}/{metricName}/{metricValue}", s.logger.WithLogging(s.PostHandler))
-	s.router.Post("/update/{metricType}/{metricName}/{metricValue}/", s.logger.WithLogging(s.PostHandler))
+	s.router.Post("/update/{metricType}/{metricName}/{metricValue}", s.logger.WithLogging(compression.WithUnpackingGZIP(s.PostHandler)))
+	s.router.Post("/update/{metricType}/{metricName}/{metricValue}/", s.logger.WithLogging(compression.WithUnpackingGZIP(s.PostHandler)))
 
-	s.router.Post("/update", s.logger.WithLogging(s.JSONPostHandler))
-	s.router.Post("/update/", s.logger.WithLogging(s.JSONPostHandler))
+	s.router.Post("/update", s.logger.WithLogging(compression.WithUnpackingGZIP(s.JSONPostHandler)))
+	s.router.Post("/update/", s.logger.WithLogging(compression.WithUnpackingGZIP(s.JSONPostHandler)))
 
 	s.router.Post("/value", s.JSONGetHandler)
 	s.router.Post("/value/", s.JSONGetHandler)
