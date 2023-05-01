@@ -21,6 +21,7 @@ func (s *MyServer) JSONGetHandler(w http.ResponseWriter, r *http.Request) {
 	header := w.Header()
 	header.Set("Content-Type", "application/json; charset=utf-8")
 	header.Set("Date", time.Now().String())
+	log.Println("g Header set")
 
 	body, err := r.GetBody()
 	if err != nil {
@@ -43,6 +44,7 @@ func (s *MyServer) JSONGetHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
+	log.Println("g Metrics Marshaled")
 
 	metricType := data.MType
 	metricName := data.MType
@@ -58,11 +60,11 @@ func (s *MyServer) JSONGetHandler(w http.ResponseWriter, r *http.Request) {
 		val, isMetricFound = s.storage.GetCounter(metricName)
 		*data.Delta = val
 	}
-	//if !isMetricFound {
-	//	w.WriteHeader(http.StatusNotFound)
-	//	return
-	//}
-	_ = isMetricFound
+	if !isMetricFound {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+	log.Println("g Data in json set")
 
 	buf, err = json.Marshal(data)
 	if err != nil {

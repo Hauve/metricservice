@@ -21,6 +21,7 @@ func (s *MyServer) JSONPostHandler(w http.ResponseWriter, r *http.Request) {
 	header := w.Header()
 	header.Set("Content-Type", "application/json; charset=utf-8")
 	header.Set("Date", time.Now().String())
+	log.Println("p Header set")
 
 	body, err := r.GetBody()
 	if err != nil {
@@ -43,6 +44,7 @@ func (s *MyServer) JSONPostHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
+	log.Println("p Metrics Marshaled")
 
 	metricType := data.MType
 	metricName := data.MType
@@ -51,7 +53,6 @@ func (s *MyServer) JSONPostHandler(w http.ResponseWriter, r *http.Request) {
 	case storage.Gauge:
 		valFloat := data.Value
 		s.storage.SetGauge(metricName, *valFloat)
-		_, err = w.Write(buf)
 	case storage.Counter:
 		valInt := data.Delta
 		s.storage.AddCounter(metricName, *valInt)
@@ -63,15 +64,16 @@ func (s *MyServer) JSONPostHandler(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
-		_, err = w.Write(buf)
 	default:
 		w.WriteHeader(http.StatusNotImplemented)
 		return
 	}
-
+	log.Println("p Data in json set")
+	_, err = w.Write(buf)
 	if err != nil {
 		log.Printf("ERROR: writing fo body is failed: %s", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
+	w.WriteHeader(http.StatusOK)
 }
