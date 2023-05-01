@@ -38,24 +38,26 @@ func (m *JSONSender) Send(name, value string, mt storage.MetricType) error {
 		if err != nil {
 			return fmt.Errorf("ERROR: cannot convert gauge metric from string to float64: %w", err)
 		}
-		*jsonData.Value = temp
+		jsonData.Value = &temp
 	case storage.Counter:
 		var temp int64
 		temp, err := strconv.ParseInt(value, 10, 64)
 		if err != nil {
 			return fmt.Errorf("ERROR: cannot convert counter metric from string to int64: %w", err)
 		}
-		*jsonData.Delta = temp
+		jsonData.Delta = &temp
 	}
 	encodedData, err := json.Marshal(jsonData)
 	if err != nil {
 		return fmt.Errorf("ERROR: cannot marshal data: %w", err)
 	}
+
 	buf := bytes.NewBuffer(encodedData)
 	req, err := http.NewRequest(http.MethodPost, url, buf)
 	if err != nil {
 		return fmt.Errorf("cannot create request object: %w", err)
 	}
+
 	req.Header.Add("Content-Type", `application/json; charset=utf-8`)
 	resp, err := m.client.Do(req)
 	if err != nil {

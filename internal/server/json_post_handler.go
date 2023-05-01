@@ -23,21 +23,23 @@ func (s *MyServer) JSONPostHandler(w http.ResponseWriter, r *http.Request) {
 	header.Set("Date", time.Now().String())
 	log.Println("p Header set")
 
-	body, err := r.GetBody()
-	if err != nil {
-		log.Printf("ERROR: cannot get body: %s", err)
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
+	body := r.Body
+	log.Println("one")
 	buf, err := io.ReadAll(body)
 	if err != nil {
 		log.Printf("ERROR: cannot read from body: %s", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-
+	err = body.Close()
+	if err != nil {
+		log.Printf("cannot close body of request: %s", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	log.Println("two")
 	data := jsonmodel.Metrics{}
+	log.Println("three")
 	err = json.Unmarshal(buf, &data)
 	if err != nil {
 		log.Printf("ERROR: cannot unmarshal json: %s", err)
