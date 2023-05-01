@@ -58,8 +58,8 @@ func (s *MyServer) JSONPostHandler(w http.ResponseWriter, r *http.Request) {
 	case storage.Counter:
 		valInt := data.Delta
 		s.storage.AddCounter(metricName, *valInt)
-
-		*data.Delta, _ = s.storage.GetCounter(metricName)
+		temp, _ := s.storage.GetCounter(metricName)
+		data.Delta = &temp
 		buf, err = json.Marshal(data)
 		if err != nil {
 			log.Printf("ERROR: cannot encode data to json in reply: %s", err)

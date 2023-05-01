@@ -55,11 +55,11 @@ func (s *MyServer) JSONGetHandler(w http.ResponseWriter, r *http.Request) {
 	case storage.Gauge:
 		var val float64
 		val, isMetricFound = s.storage.GetGauge(metricName)
-		*data.Value = val
+		data.Value = &val
 	case storage.Counter:
 		var val int64
 		val, isMetricFound = s.storage.GetCounter(metricName)
-		*data.Delta = val
+		data.Delta = &val
 	}
 	if !isMetricFound {
 		w.WriteHeader(http.StatusNotFound)
