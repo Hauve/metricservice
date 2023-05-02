@@ -24,7 +24,6 @@ func (s *MyServer) JSONPostHandler(w http.ResponseWriter, r *http.Request) {
 	log.Println("p Header set")
 
 	body := r.Body
-	log.Println("one")
 	buf, err := io.ReadAll(body)
 	if err != nil {
 		log.Printf("ERROR: cannot read from body: %s", err)
@@ -37,9 +36,7 @@ func (s *MyServer) JSONPostHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	log.Println("two")
 	data := jsonmodel.Metrics{}
-	log.Println("three")
 	err = json.Unmarshal(buf, &data)
 	if err != nil {
 		log.Printf("ERROR: cannot unmarshal json: %s", err)
