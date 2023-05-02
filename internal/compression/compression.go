@@ -42,4 +42,5 @@ func unzip(w *http.ResponseWriter, r *http.Request) {
 
 	r.Body = io.NopCloser(strings.NewReader(string(body)))
 	r.ContentLength = int64(len(string(body)))
+	r.Header.Set("Content-Encoding", "gzip")
 }
