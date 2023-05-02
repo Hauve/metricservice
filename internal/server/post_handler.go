@@ -10,7 +10,6 @@ import (
 )
 
 func (s *MyServer) PostHandler(w http.ResponseWriter, r *http.Request) {
-	log.Println("PostHandler")
 	header := w.Header()
 	header.Set("Content-Type", "text/plain; charset=utf-8")
 	header.Set("Date", time.Now().String())

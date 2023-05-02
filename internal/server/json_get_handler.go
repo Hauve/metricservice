@@ -12,7 +12,7 @@ import (
 )
 
 func (s *MyServer) JSONGetHandler(w http.ResponseWriter, r *http.Request) {
-	log.Println("JSONGetHandler")
+
 	if header := r.Header.Get("Content-Type"); !strings.Contains(header, "application/json") {
 		log.Printf("ERROR: bad content type for current path")
 		w.WriteHeader(http.StatusNotFound)
@@ -22,7 +22,6 @@ func (s *MyServer) JSONGetHandler(w http.ResponseWriter, r *http.Request) {
 	header := w.Header()
 	header.Set("Content-Type", "application/json; charset=utf-8")
 	header.Set("Date", time.Now().String())
-	log.Println("g Header set")
 
 	body := r.Body
 
@@ -46,7 +45,6 @@ func (s *MyServer) JSONGetHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	log.Println("g Metrics Marshaled")
 
 	metricType := data.MType
 	metricName := data.MType
@@ -66,7 +64,6 @@ func (s *MyServer) JSONGetHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
-	log.Println("g Data in json set")
 
 	buf, err = json.Marshal(data)
 	if err != nil {

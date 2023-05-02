@@ -15,7 +15,6 @@ func WithGzip(next http.HandlerFunc) http.HandlerFunc {
 func withUnpackingGZIP(next http.Handler) http.HandlerFunc {
 	compFn := func(w http.ResponseWriter, r *http.Request) {
 		var reader io.Reader
-		log.Println("unpacking gzip")
 		if r.Header.Get("Content-Encoding") == "gzip" {
 			gz, err := gzip.NewReader(r.Body)
 			if err != nil {
@@ -36,7 +35,6 @@ func withUnpackingGZIP(next http.Handler) http.HandlerFunc {
 
 func withPackingGZIP(next http.Handler) http.HandlerFunc {
 	compFn := func(w http.ResponseWriter, r *http.Request) {
-		log.Println("packing gzip")
 		if !strings.Contains(r.Header.Get("Accept-Encoding"), "gzip") {
 			next.ServeHTTP(w, r)
 			return
