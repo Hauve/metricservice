@@ -52,13 +52,19 @@ func (m *JSONSender) Send(name, value string, mt storage.MetricType) error {
 		return fmt.Errorf("ERROR: cannot marshal data: %w", err)
 	}
 
-	buf := bytes.NewBuffer(encodedData)
+	compressedEncodedData, err := compress(encodedData)
+	if err != nil {
+		return fmt.Errorf("ERROR: cannot compress data: %w", err)
+	}
+
+	buf := bytes.NewBuffer(compressedEncodedData)
 	req, err := http.NewRequest(http.MethodPost, url, buf)
 	if err != nil {
 		return fmt.Errorf("cannot create request object: %w", err)
 	}
 
 	req.Header.Add("Content-Type", `application/json; charset=utf-8`)
+	req.Header.Add("Content-Encoding", "gzip")
 	resp, err := m.client.Do(req)
 	if err != nil {
 		return fmt.Errorf("cannot create post request: %w", err)

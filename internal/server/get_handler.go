@@ -11,7 +11,7 @@ import (
 )
 
 func (s *MyServer) GetHandler(w http.ResponseWriter, r *http.Request) {
-
+	log.Println("GetHandler")
 	header := w.Header()
 	header.Set("Content-Type", "text/plain; charset=utf-8")
 	header.Set("Date", time.Now().String())

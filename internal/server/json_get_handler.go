@@ -12,6 +12,7 @@ import (
 )
 
 func (s *MyServer) JSONGetHandler(w http.ResponseWriter, r *http.Request) {
+	log.Println("JSONGetHandler")
 	if header := r.Header.Get("Content-Type"); !strings.Contains(header, "application/json") {
 		log.Printf("ERROR: bad content type for current path")
 		w.WriteHeader(http.StatusNotFound)

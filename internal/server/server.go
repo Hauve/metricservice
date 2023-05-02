@@ -35,11 +35,11 @@ func (s *MyServer) Run() {
 }
 
 func (s *MyServer) registerRoutes() {
-	s.router.Get("/value/{metricType}/{metricName}", s.logger.WithLogging(s.GetHandler))
-	s.router.Get("/value/{metricType}/{metricName}/", s.logger.WithLogging(s.GetHandler))
-	s.router.Get("/", s.logger.WithLogging(s.GetAllHandler))
-	s.router.Post("/update/{metricType}/{metricName}/{metricValue}", s.logger.WithLogging(s.PostHandler))
-	s.router.Post("/update/{metricType}/{metricName}/{metricValue}/", s.logger.WithLogging(s.PostHandler))
+	s.router.Get("/value/{metricType}/{metricName}", s.logger.WithLogging(compression.WithGzip(s.GetHandler)))
+	s.router.Get("/value/{metricType}/{metricName}/", s.logger.WithLogging(compression.WithGzip(s.GetHandler)))
+	s.router.Get("/", s.logger.WithLogging(compression.WithGzip(s.GetAllHandler)))
+	s.router.Post("/update/{metricType}/{metricName}/{metricValue}", s.logger.WithLogging(compression.WithGzip(s.PostHandler)))
+	s.router.Post("/update/{metricType}/{metricName}/{metricValue}/", s.logger.WithLogging(compression.WithGzip(s.PostHandler)))
 
 	s.router.Post("/update", s.logger.WithLogging(compression.WithGzip(s.JSONPostHandler)))
 	s.router.Post("/update/", s.logger.WithLogging(compression.WithGzip(s.JSONPostHandler)))
