@@ -9,9 +9,7 @@ import (
 )
 
 func (s *MyServer) dump() {
-	ticker := time.NewTicker(s.cfg.StoreInterval)
-
-	file, err := os.OpenFile(s.cfg.FileStoragePath, os.O_WRONLY|os.O_CREATE, 0666)
+	file, err := os.OpenFile(s.cfg.FileStoragePath, os.O_WRONLY|os.O_CREATE, 0777)
 	if err != nil {
 		log.Printf("cant open or create dump file: %s", err)
 		return
@@ -20,6 +18,7 @@ func (s *MyServer) dump() {
 		_ = file.Close()
 	}()
 
+	ticker := time.NewTicker(s.cfg.StoreInterval)
 	for {
 		<-ticker.C
 

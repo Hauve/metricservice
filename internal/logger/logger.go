@@ -27,13 +27,13 @@ func (log Logger) WithLogging(h http.HandlerFunc) http.HandlerFunc {
 	logFn := func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
 
-		responseData := &responseData{
+		rData := &responseData{
 			status: 0,
 			size:   0,
 		}
 		lw := loggingResponseWriter{
 			ResponseWriter: w,
-			responseData:   responseData,
+			responseData:   rData,
 		}
 		h.ServeHTTP(&lw, r)
 
@@ -42,9 +42,9 @@ func (log Logger) WithLogging(h http.HandlerFunc) http.HandlerFunc {
 		log.sugar.Infoln(
 			"uri", r.RequestURI,
 			"method", r.Method,
-			"status", responseData.status,
+			"status", rData.status,
 			"duration", duration*time.Millisecond,
-			"size", responseData.size,
+			"size", rData.size,
 		)
 	}
 	return logFn

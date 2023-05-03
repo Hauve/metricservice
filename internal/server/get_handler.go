@@ -42,4 +42,5 @@ func (s *MyServer) GetHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Printf("cannot write response to the client: %s", err)
 	}
+	w.WriteHeader(http.StatusOK)
 }

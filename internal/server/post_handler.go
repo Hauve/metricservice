@@ -41,4 +41,5 @@ func (s *MyServer) PostHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotImplemented)
 		return
 	}
+	w.WriteHeader(http.StatusOK)
 }
