@@ -22,7 +22,6 @@ func (s *MyServer) JSONPostHandler(w http.ResponseWriter, r *http.Request) {
 	header := w.Header()
 	header.Set("Content-Type", "application/json; charset=utf-8")
 	header.Set("Date", time.Now().String())
-	log.Println("p Header set")
 
 	body := r.Body
 	buf, err := io.ReadAll(body)

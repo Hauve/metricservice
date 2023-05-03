@@ -8,6 +8,8 @@ import (
 	"github.com/go-chi/chi/v5"
 	"log"
 	"net/http"
+	"os"
+	"os/signal"
 )
 
 type MyServer struct {
@@ -27,11 +29,23 @@ func New(cfg *config.ServerConfig, storage storage.Storage, router chi.Router, l
 }
 
 func (s *MyServer) Run() {
+	s.restore()
 	s.registerRoutes()
+
+	go s.dump()
+	go exitOnSignals()
+
 	err := http.ListenAndServe(s.cfg.Address, s.router)
 	if err != nil {
 		log.Fatalf("cannot ListenAndServe: %s", err)
 	}
+}
+
+func exitOnSignals() {
+	c := make(chan os.Signal, 1)
+	signal.Notify(c)
+	<-c
+	log.Fatalf("Got signal for exit")
 }
 
 func (s *MyServer) registerRoutes() {

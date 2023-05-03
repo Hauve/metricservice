@@ -35,9 +35,7 @@ func (log Logger) WithLogging(h http.HandlerFunc) http.HandlerFunc {
 			ResponseWriter: w,
 			responseData:   responseData,
 		}
-		fmt.Println("Before ServeHTTP in Logger")
 		h.ServeHTTP(&lw, r)
-		fmt.Println("After ServeHTTP in Logger")
 
 		duration := time.Since(start)
 
