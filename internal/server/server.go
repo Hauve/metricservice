@@ -3,6 +3,7 @@ package server
 import (
 	"github.com/Hauve/metricservice.git/internal/compression"
 	"github.com/Hauve/metricservice.git/internal/config"
+	"github.com/Hauve/metricservice.git/internal/dumper"
 	"github.com/Hauve/metricservice.git/internal/logger"
 	"github.com/Hauve/metricservice.git/internal/storage"
 	"github.com/go-chi/chi/v5"
@@ -15,14 +16,16 @@ type MyServer struct {
 	storage storage.Storage
 	router  chi.Router
 	logger  logger.Logger
+	dumper  *dumper.Dumper
 }
 
-func New(cfg *config.ServerConfig, storage storage.Storage, router chi.Router, log *logger.Logger) *MyServer {
+func New(cfg *config.ServerConfig, storage storage.Storage, router chi.Router, log *logger.Logger, dump *dumper.Dumper) *MyServer {
 	return &MyServer{
 		cfg:     cfg,
 		storage: storage,
 		router:  router,
 		logger:  *log,
+		dumper:  dump,
 	}
 }
 
