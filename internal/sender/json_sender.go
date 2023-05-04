@@ -12,14 +12,12 @@ import (
 )
 
 type JSONSender struct {
-	cfg    *config.AgentConfig
-	client *http.Client
+	cfg *config.AgentConfig
 }
 
 func NewJSONSender(cfg *config.AgentConfig) *JSONSender {
 	return &JSONSender{
-		cfg:    cfg,
-		client: &http.Client{},
+		cfg: cfg,
 	}
 }
 
@@ -36,20 +34,22 @@ func (m *JSONSender) Send(name, value string, mt storage.MetricType) error {
 		var temp float64
 		temp, err := strconv.ParseFloat(value, 64)
 		if err != nil {
-			return fmt.Errorf("ERROR: cannot convert gauge metric from string to float64: %w", err)
+			return fmt.Errorf("cannot convert gauge metric from string to float64: %w", err)
 		}
 		jsonData.Value = &temp
 	case storage.Counter:
 		var temp int64
 		temp, err := strconv.ParseInt(value, 10, 64)
 		if err != nil {
-			return fmt.Errorf("ERROR: cannot convert counter metric from string to int64: %w", err)
+			return fmt.Errorf("cannot convert counter metric from string to int64: %w", err)
 		}
 		jsonData.Delta = &temp
+	default:
+		return fmt.Errorf("incorrect metric type")
 	}
 	encodedData, err := json.Marshal(jsonData)
 	if err != nil {
-		return fmt.Errorf("ERROR: cannot marshal data: %w", err)
+		return fmt.Errorf("cannot marshal data: %w", err)
 	}
 
 	compressedEncodedData, err := compress(encodedData)
@@ -65,7 +65,9 @@ func (m *JSONSender) Send(name, value string, mt storage.MetricType) error {
 
 	req.Header.Add("Content-Type", `application/json; charset=utf-8`)
 	req.Header.Add("Content-Encoding", "gzip")
-	resp, err := m.client.Do(req)
+
+	client := http.Client{}
+	resp, err := client.Do(req)
 	if err != nil {
 		return fmt.Errorf("cannot create post request: %w", err)
 	}

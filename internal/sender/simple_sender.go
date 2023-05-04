@@ -8,19 +8,16 @@ import (
 )
 
 type SimpleSender struct {
-	cfg    *config.AgentConfig
-	client *http.Client
+	cfg *config.AgentConfig
 }
 
 func NewSenderAsBody(cfg *config.AgentConfig) *SimpleSender {
 	return &SimpleSender{
-		cfg:    cfg,
-		client: &http.Client{},
+		cfg: cfg,
 	}
 }
 
 func (m *SimpleSender) Send(name, value string, mt storage.MetricType) error {
-
 	url := fmt.Sprintf("http://%s/update/%s/%s/%s", m.cfg.Address, mt, name, value)
 
 	req, err := http.NewRequest(http.MethodPost, url, nil)
@@ -29,7 +26,9 @@ func (m *SimpleSender) Send(name, value string, mt storage.MetricType) error {
 	}
 	req.Header.Add("Content-Length", `0`)
 	req.Header.Add("Content-Type", `text/plain`)
-	resp, err := m.client.Do(req)
+
+	client := http.Client{}
+	resp, err := client.Do(req)
 	if err != nil {
 		return fmt.Errorf("cannot create post request: %w", err)
 	}
