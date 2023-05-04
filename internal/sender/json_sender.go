@@ -12,12 +12,14 @@ import (
 )
 
 type JSONSender struct {
-	cfg *config.AgentConfig
+	cfg    *config.AgentConfig
+	client clientDoer
 }
 
 func NewJSONSender(cfg *config.AgentConfig) *JSONSender {
 	return &JSONSender{
-		cfg: cfg,
+		cfg:    cfg,
+		client: &http.Client{},
 	}
 }
 
@@ -66,8 +68,7 @@ func (m *JSONSender) Send(name, value string, mt storage.MetricType) error {
 	req.Header.Add("Content-Type", `application/json; charset=utf-8`)
 	req.Header.Add("Content-Encoding", "gzip")
 
-	client := http.Client{}
-	resp, err := client.Do(req)
+	resp, err := m.client.Do(req)
 	if err != nil {
 		return fmt.Errorf("cannot create post request: %w", err)
 	}

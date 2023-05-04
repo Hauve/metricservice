@@ -3,88 +3,106 @@ package logger
 import (
 	"go.uber.org/zap"
 	"net/http"
-	"reflect"
+	"net/http/httptest"
 	"testing"
 )
+
+func handlerForTest(w http.ResponseWriter, _ *http.Request) {
+	data := []byte("body message")
+	_, _ = w.Write(data)
+}
 
 func TestLogger_WithLogging(t *testing.T) {
 	type fields struct {
 		sugar zap.SugaredLogger
 	}
-	type args struct {
-		h http.HandlerFunc
-	}
 	tests := []struct {
 		name   string
 		fields fields
-		args   args
-		want   http.HandlerFunc
-	}{}
+	}{
+		{
+			name: "positive test",
+			fields: fields{
+				sugar: zap.SugaredLogger{},
+			},
+		},
+	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			log := Logger{
 				sugar: tt.fields.sugar,
 			}
-			if got := log.WithLogging(tt.args.h); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("WithLogging() = %v, want %v", got, tt.want)
-			}
+			_ = log.WithLogging(handlerForTest)
+			t.SkipNow()
 		})
 	}
 }
 
 func Test_loggingResponseWriter_Write(t *testing.T) {
-	type fields struct {
-		ResponseWriter http.ResponseWriter
-		responseData   *responseData
-	}
 	type args struct {
 		b []byte
 	}
 	tests := []struct {
-		name    string
-		fields  fields
-		args    args
-		want    int
-		wantErr bool
-	}{}
+		name       string
+		args       args
+		wantStatus int
+		wantErr    bool
+	}{
+		{
+			name: "ok",
+			args: args{
+				[]byte("for writing"),
+			},
+			wantStatus: 200,
+			wantErr:    false,
+		},
+	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			r := &loggingResponseWriter{
-				ResponseWriter: tt.fields.ResponseWriter,
-				responseData:   tt.fields.responseData,
+				ResponseWriter: httptest.NewRecorder(),
+				responseData:   &responseData{},
 			}
-			got, err := r.Write(tt.args.b)
+
+			_, err := r.Write(tt.args.b)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Write() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if got != tt.want {
-				t.Errorf("Write() got = %v, want %v", got, tt.want)
+			if r.responseData.status != tt.wantStatus {
+				t.Errorf("Write() got status = %v, want status %v", r.responseData.status, tt.wantStatus)
 			}
 		})
 	}
 }
 
 func Test_loggingResponseWriter_WriteHeader(t *testing.T) {
-	type fields struct {
-		ResponseWriter http.ResponseWriter
-		responseData   *responseData
-	}
 	type args struct {
 		statusCode int
 	}
 	tests := []struct {
-		name   string
-		fields fields
-		args   args
-	}{}
+		name       string
+		args       args
+		wantStatus int
+	}{
+		{
+			name: "ok",
+			args: args{
+				200,
+			},
+			wantStatus: 200,
+		},
+	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			r := &loggingResponseWriter{
-				ResponseWriter: tt.fields.ResponseWriter,
-				responseData:   tt.fields.responseData,
+				ResponseWriter: httptest.NewRecorder(),
+				responseData:   &responseData{},
 			}
 			r.WriteHeader(tt.args.statusCode)
+			if r.responseData.status != tt.wantStatus {
+				t.Errorf("Write() got status = %v, want status %v", r.responseData.status, tt.wantStatus)
+			}
 		})
 	}
 }

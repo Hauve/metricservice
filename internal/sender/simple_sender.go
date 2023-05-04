@@ -8,12 +8,14 @@ import (
 )
 
 type SimpleSender struct {
-	cfg *config.AgentConfig
+	cfg    *config.AgentConfig
+	client clientDoer
 }
 
-func NewSenderAsBody(cfg *config.AgentConfig) *SimpleSender {
+func NewSimpleSender(cfg *config.AgentConfig) *SimpleSender {
 	return &SimpleSender{
-		cfg: cfg,
+		cfg:    cfg,
+		client: &http.Client{},
 	}
 }
 
@@ -27,8 +29,7 @@ func (m *SimpleSender) Send(name, value string, mt storage.MetricType) error {
 	req.Header.Add("Content-Length", `0`)
 	req.Header.Add("Content-Type", `text/plain`)
 
-	client := http.Client{}
-	resp, err := client.Do(req)
+	resp, err := m.client.Do(req)
 	if err != nil {
 		return fmt.Errorf("cannot create post request: %w", err)
 	}

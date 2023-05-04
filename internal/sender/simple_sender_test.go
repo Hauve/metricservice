@@ -3,8 +3,6 @@ package sender
 import (
 	"github.com/Hauve/metricservice.git/internal/config"
 	"github.com/Hauve/metricservice.git/internal/storage"
-	"net/http"
-	"net/http/httptest"
 	"testing"
 )
 
@@ -39,20 +37,17 @@ func TestSimpleSender_Send(t *testing.T) {
 		},
 	}
 
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-	}))
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			m := &SimpleSender{
 				cfg: &config.AgentConfig{
-					Address: server.URL,
+					Address: "localhost:8080",
 				},
+				client: &clientTest{},
 			}
 			if err := m.Send(tt.args.name, tt.args.value, tt.args.mt); (err != nil) != tt.wantErr {
 				t.Errorf("Send() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
 	}
-	server.Close()
 }
