@@ -39,10 +39,11 @@ func (ag *MyAgent) collectRuntimeMetrics() {
 	ag.storage.SetGauge("StackInuse", float64(stats.StackInuse))
 	ag.storage.SetGauge("StackSys", float64(stats.StackSys))
 	ag.storage.SetGauge("Sys", float64(stats.Sys))
-	ag.storage.SetGauge("OtherSys", float64(stats.TotalAlloc))
-	ag.storage.SetGauge("RandomValue", float64(stats.TotalAlloc))
+	ag.storage.SetGauge("TotalAlloc", float64(stats.TotalAlloc))
+
+	ag.storage.SetGauge("RandomValue", rand.Float64())
 }
 func (ag *MyAgent) collectSystemMetrics() {
-	ag.storage.SetGauge("RandomValue", rand.Float64())
+
 	ag.storage.AddCounter("PollCount", 1)
 }

@@ -35,7 +35,6 @@ func (s *MyServer) JSONPostHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	log.Printf("%v", buf)
 	data := jsonmodel.Metrics{}
 	err = json.Unmarshal(buf, &data)
 	if err != nil {
