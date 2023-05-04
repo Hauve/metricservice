@@ -12,7 +12,7 @@ import (
 )
 
 func (s *MyServer) JSONGetHandler(w http.ResponseWriter, r *http.Request) {
-
+	log.Println("JSONGetHandler works")
 	if header := r.Header.Get("Content-Type"); !strings.Contains(header, "application/json") {
 		log.Printf("ERROR: bad content type for current path")
 		w.WriteHeader(http.StatusNotFound)
@@ -24,7 +24,6 @@ func (s *MyServer) JSONGetHandler(w http.ResponseWriter, r *http.Request) {
 	header.Set("Date", time.Now().String())
 
 	body := r.Body
-
 	buf, err := io.ReadAll(body)
 	if err != nil {
 		log.Printf("ERROR: cannot read from body: %s", err)
@@ -33,7 +32,7 @@ func (s *MyServer) JSONGetHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	err = body.Close()
 	if err != nil {
-		log.Printf("cannot close body of request: %s", err)
+		log.Printf("ERROR: cannot close body of request: %s", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -47,7 +46,7 @@ func (s *MyServer) JSONGetHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	metricType := data.MType
-	metricName := data.MType
+	metricName := data.ID
 
 	var isMetricFound bool
 	switch metricType {
@@ -64,19 +63,17 @@ func (s *MyServer) JSONGetHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
-
 	buf, err = json.Marshal(data)
 	if err != nil {
 		log.Printf("ERROR: cannot encode data to json in reply: %s", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-
+	log.Printf("get data: %v", data)
 	_, err = w.Write(buf)
 	if err != nil {
 		log.Printf("ERROR: writing fo body is failed: %s", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	w.WriteHeader(http.StatusOK)
 }

@@ -12,7 +12,7 @@ import (
 )
 
 func (s *MyServer) JSONPostHandler(w http.ResponseWriter, r *http.Request) {
-
+	log.Println("JSONPostHandler works")
 	if header := r.Header.Get("Content-Type"); !strings.Contains(header, "application/json") {
 		log.Printf("ERROR: bad content type for current path")
 		w.WriteHeader(http.StatusNotFound)
@@ -36,6 +36,7 @@ func (s *MyServer) JSONPostHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
+
 	data := jsonmodel.Metrics{}
 	err = json.Unmarshal(buf, &data)
 	if err != nil {
@@ -44,14 +45,30 @@ func (s *MyServer) JSONPostHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if data.Value == nil && data.Delta == nil {
+		log.Printf("got incorrect json: value and delta are nil")
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+
 	metricType := data.MType
-	metricName := data.MType
+	metricName := data.ID
 
 	switch metricType {
 	case storage.Gauge:
+		if data.Value == nil {
+			log.Printf("got incorrect json: type='gauge', but value is nil")
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
 		valFloat := data.Value
 		s.storage.SetGauge(metricName, *valFloat)
 	case storage.Counter:
+		if data.Delta == nil {
+			log.Printf("got incorrect json: type='counter', but delta is nil")
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
 		valInt := data.Delta
 		s.storage.AddCounter(metricName, *valInt)
 		temp, _ := s.storage.GetCounter(metricName)
@@ -66,12 +83,11 @@ func (s *MyServer) JSONPostHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotImplemented)
 		return
 	}
-
+	log.Printf("post data: %v", data)
 	_, err = w.Write(buf)
 	if err != nil {
 		log.Printf("ERROR: writing fo body is failed: %s", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	w.WriteHeader(http.StatusOK)
 }

@@ -9,18 +9,15 @@ import (
 )
 
 func (s *MyServer) dump() {
-	file, err := os.OpenFile(s.cfg.FileStoragePath, os.O_WRONLY|os.O_CREATE, 0777)
-	if err != nil {
-		log.Printf("cant open or create dump file: %s", err)
-		return
-	}
-	defer func() {
-		_ = file.Close()
-	}()
 
 	ticker := time.NewTicker(s.cfg.StoreInterval)
 	for {
 		<-ticker.C
+		file, err := os.OpenFile(s.cfg.FileStoragePath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0777)
+		if err != nil {
+			log.Printf("cant open or create dump file: %s", err)
+			return
+		}
 
 		metricsFromFile := jsonmodel.Dump{}
 
@@ -53,5 +50,7 @@ func (s *MyServer) dump() {
 			log.Printf("cannot encode json to dump file: %s", err)
 			return
 		}
+
+		_ = file.Close()
 	}
 }

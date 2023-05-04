@@ -45,10 +45,10 @@ func (s *MyServer) registerRoutes() {
 	s.router.Post("/update/{metricType}/{metricName}/{metricValue}", s.logger.WithLogging(compression.WithGzip(s.PostHandler)))
 	s.router.Post("/update/{metricType}/{metricName}/{metricValue}/", s.logger.WithLogging(compression.WithGzip(s.PostHandler)))
 
-	s.router.Post("/update", s.logger.WithLogging(compression.WithGzip(s.JSONPostHandler)))
-	s.router.Post("/update/", s.logger.WithLogging(compression.WithGzip(s.JSONPostHandler)))
+	s.router.Post("/update", s.JSONPostHandler)  //s.logger.WithLogging(compression.WithGzip(s.JSONPostHandler)))
+	s.router.Post("/update/", s.JSONPostHandler) //s.logger.WithLogging(compression.WithGzip(s.JSONPostHandler)))
 
-	s.router.Post("/value", s.logger.WithLogging(compression.WithGzip(s.JSONGetHandler)))
-	s.router.Post("/value/", s.logger.WithLogging(compression.WithGzip(s.JSONGetHandler)))
+	s.router.Post("/value", s.JSONGetHandler)  //s.logger.WithLogging(compression.WithGzip(s.JSONGetHandler)))
+	s.router.Post("/value/", s.JSONGetHandler) //s.logger.WithLogging(compression.WithGzip(s.JSONGetHandler)))
 
 }
