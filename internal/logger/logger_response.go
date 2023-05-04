@@ -25,6 +25,10 @@ func (r *loggingResponseWriter) Write(b []byte) (int, error) {
 
 func (r *loggingResponseWriter) WriteHeader(statusCode int) {
 	// записываем код статуса, используя оригинальный http.ResponseWriter
-	r.ResponseWriter.WriteHeader(statusCode)
+	if statusCode != 200 {
+		//Чтобы избежать предупреждение за повторную запись header.
+		//Write по умолчанию выставляет его в 200, если запись ОК
+		r.ResponseWriter.WriteHeader(statusCode)
+	}
 	r.responseData.status = statusCode // захватываем код статуса
 }
