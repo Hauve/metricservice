@@ -224,22 +224,22 @@ func TestMyServer_JSONGetHandler(t *testing.T) {
 				MType: "counter",
 			},
 		},
-		//{
-		//	name: "negative test 1: get non-existent metric",
-		//	code: http.StatusNotFound,
-		//	body: jsonmodel.Metrics{
-		//		ID:    "name",
-		//		MType: "counter",
-		//	},
-		//},
-		//{
-		//	name: "negative test 2: get non-existent metric type",
-		//	code: http.StatusNotFound,
-		//	body: jsonmodel.Metrics{
-		//		ID:    "name1",
-		//		MType: "non-existent type",
-		//	},
-		//},
+		{
+			name: "negative test 1: get non-existent metric",
+			code: http.StatusNotFound,
+			body: jsonmodel.Metrics{
+				ID:    "name",
+				MType: "counter",
+			},
+		},
+		{
+			name: "negative test 2: get non-existent metric type",
+			code: http.StatusNotFound,
+			body: jsonmodel.Metrics{
+				ID:    "name1",
+				MType: "non-existent type",
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -265,7 +265,10 @@ func TestMyServer_JSONGetHandler(t *testing.T) {
 
 			res := resp.Result()
 
-			require.Equal(t, tt.code, res.StatusCode)
+			if tt.code != http.StatusOK {
+				require.Equal(t, tt.code, res.StatusCode)
+				return
+			}
 			assert.Equal(
 				t,
 				"application/json; charset=utf-8",
@@ -290,32 +293,94 @@ func TestMyServer_JSONGetHandler(t *testing.T) {
 }
 
 func TestMyServer_JSONPostHandler(t *testing.T) {
-	type fields struct {
-		cfg     *config.ServerConfig
-		storage storage.Storage
-		router  chi.Router
-		logger  logger.Logger
-	}
-	type args struct {
-		w http.ResponseWriter
-		r *http.Request
-	}
+
+	gauge := 55.2
+	counter := int64(55)
 	tests := []struct {
-		name   string
-		fields fields
-		args   args
+		name string
+		code int
+		body jsonmodel.Metrics
 	}{
-		{},
+		{
+			name: "positive test 1: set gauge",
+			code: http.StatusOK,
+			body: jsonmodel.Metrics{
+				ID:    "name1",
+				MType: "gauge",
+				Value: &gauge,
+			},
+		},
+		{
+			name: "positive test 2: set counter",
+			code: http.StatusOK,
+			body: jsonmodel.Metrics{
+				ID:    "name1",
+				MType: "counter",
+				Delta: &counter,
+			},
+		},
+		//{
+		//	name: "negative test 1: get non-existent metric",
+		//	code: http.StatusNotFound,
+		//	body: jsonmodel.Metrics{
+		//		ID:    "name",
+		//		MType: "counter",
+		//	},
+		//},
+		//{
+		//	name: "negative test 2: get non-existent metric type",
+		//	code: http.StatusNotFound,
+		//	body: jsonmodel.Metrics{
+		//		ID:    "name1",
+		//		MType: "non-existent type",
+		//	},
+		//},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			s := &MyServer{
-				cfg:     tt.fields.cfg,
-				storage: tt.fields.storage,
-				router:  tt.fields.router,
-				logger:  tt.fields.logger,
+				storage: storage.NewMemStorage(),
+				router:  chi.NewRouter(),
 			}
-			s.JSONPostHandler(tt.args.w, tt.args.r)
+
+			body, err := json.Marshal(tt.body)
+			if err != nil {
+				t.Errorf("json marshalling failed: %s", err)
+			}
+
+			buf := bytes.NewBuffer(body)
+			req := httptest.NewRequest(http.MethodPost, "http://localhost:8080/update/", buf)
+			req.Header.Set("Content-Type", "application/json")
+
+			resp := httptest.NewRecorder()
+			s.router.Post("/value/", s.JSONGetHandler)
+			s.router.ServeHTTP(resp, req)
+
+			res := resp.Result()
+
+			if tt.code != http.StatusOK {
+				require.Equal(t, tt.code, res.StatusCode)
+				return
+			}
+			assert.Equal(
+				t,
+				"application/json; charset=utf-8",
+				res.Header.Get("Content-Type"),
+			)
+			body, err = io.ReadAll(res.Body)
+			assert.NoError(t, err)
+
+			respData := jsonmodel.Metrics{}
+			err = json.Unmarshal(body, &respData)
+			assert.NoError(t, err)
+
+			assert.Equal(t, tt.body.ID, respData.ID)
+			assert.Equal(t, tt.body.MType, respData.MType)
+			if tt.body.MType == storage.Gauge {
+				assert.Equal(t, 25.1, *respData.Value)
+			} else if tt.body.MType == storage.Counter {
+				assert.Equal(t, int64(25), *respData.Delta)
+			}
 		})
 	}
 }
