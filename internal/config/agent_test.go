@@ -22,6 +22,7 @@ func TestLoadAgentConfig(t *testing.T) {
 			wantErr: false,
 		},
 	}
+	//Test only for default values
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := LoadAgentConfig()

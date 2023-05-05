@@ -47,7 +47,7 @@ func (s *MyServer) JSONGetHandler(w http.ResponseWriter, r *http.Request) {
 	metricType := data.MType
 	metricName := data.ID
 
-	var isMetricFound bool
+	isMetricFound := false
 	switch metricType {
 	case storage.Gauge:
 		var val float64

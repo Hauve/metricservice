@@ -1,7 +1,10 @@
 package server
 
 import (
+	"bytes"
+	"encoding/json"
 	"github.com/Hauve/metricservice.git/internal/config"
+	"github.com/Hauve/metricservice.git/internal/jsonmodel"
 	"github.com/Hauve/metricservice.git/internal/logger"
 	"github.com/Hauve/metricservice.git/internal/storage"
 	"github.com/go-chi/chi/v5"
@@ -16,7 +19,7 @@ import (
 	"testing"
 )
 
-func TestService_GetHandler(t *testing.T) {
+func TestMyServer_GetHandler(t *testing.T) {
 	type want struct {
 		code  int
 		value string
@@ -93,7 +96,7 @@ func TestService_GetHandler(t *testing.T) {
 	}
 }
 
-func TestService_PostHandler(t *testing.T) {
+func TestMyServer_PostHandler(t *testing.T) {
 	type want struct {
 		code int
 	}
@@ -194,6 +197,125 @@ func TestService_PostHandler(t *testing.T) {
 			if err != nil {
 				log.Printf("%e", err)
 			}
+		})
+	}
+}
+
+func TestMyServer_JSONGetHandler(t *testing.T) {
+
+	tests := []struct {
+		name string
+		code int
+		body jsonmodel.Metrics
+	}{
+		{
+			name: "positive test 1: get gauge",
+			code: http.StatusOK,
+			body: jsonmodel.Metrics{
+				ID:    "name1",
+				MType: "gauge",
+			},
+		},
+		{
+			name: "positive test 2: get counter",
+			code: http.StatusOK,
+			body: jsonmodel.Metrics{
+				ID:    "name1",
+				MType: "counter",
+			},
+		},
+		//{
+		//	name: "negative test 1: get non-existent metric",
+		//	code: http.StatusNotFound,
+		//	body: jsonmodel.Metrics{
+		//		ID:    "name",
+		//		MType: "counter",
+		//	},
+		//},
+		//{
+		//	name: "negative test 2: get non-existent metric type",
+		//	code: http.StatusNotFound,
+		//	body: jsonmodel.Metrics{
+		//		ID:    "name1",
+		//		MType: "non-existent type",
+		//	},
+		//},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s := &MyServer{
+				storage: storage.NewMemStorage(),
+				router:  chi.NewRouter(),
+			}
+			s.storage.SetGauge("name1", 25.1)
+			s.storage.SetCounter("name1", 25)
+
+			body, err := json.Marshal(tt.body)
+			if err != nil {
+				t.Errorf("json marshalling failed: %s", err)
+			}
+
+			buf := bytes.NewBuffer(body)
+			req := httptest.NewRequest(http.MethodPost, "http://localhost:8080/value/", buf)
+			req.Header.Set("Content-Type", "application/json")
+
+			resp := httptest.NewRecorder()
+			s.router.Post("/value/", s.JSONGetHandler)
+			s.router.ServeHTTP(resp, req)
+
+			res := resp.Result()
+
+			require.Equal(t, tt.code, res.StatusCode)
+			assert.Equal(
+				t,
+				"application/json; charset=utf-8",
+				res.Header.Get("Content-Type"),
+			)
+			body, err = io.ReadAll(res.Body)
+			assert.NoError(t, err)
+
+			respData := jsonmodel.Metrics{}
+			err = json.Unmarshal(body, &respData)
+			assert.NoError(t, err)
+
+			assert.Equal(t, tt.body.ID, respData.ID)
+			assert.Equal(t, tt.body.MType, respData.MType)
+			if tt.body.MType == storage.Gauge {
+				assert.Equal(t, 25.1, *respData.Value)
+			} else if tt.body.MType == storage.Counter {
+				assert.Equal(t, int64(25), *respData.Delta)
+			}
+		})
+	}
+}
+
+func TestMyServer_JSONPostHandler(t *testing.T) {
+	type fields struct {
+		cfg     *config.ServerConfig
+		storage storage.Storage
+		router  chi.Router
+		logger  logger.Logger
+	}
+	type args struct {
+		w http.ResponseWriter
+		r *http.Request
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+	}{
+		{},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s := &MyServer{
+				cfg:     tt.fields.cfg,
+				storage: tt.fields.storage,
+				router:  tt.fields.router,
+				logger:  tt.fields.logger,
+			}
+			s.JSONPostHandler(tt.args.w, tt.args.r)
 		})
 	}
 }
