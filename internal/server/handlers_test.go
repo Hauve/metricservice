@@ -292,12 +292,10 @@ func TestMyServer_JSONGetHandler(t *testing.T) {
 			s.router.ServeHTTP(resp, req)
 
 			res := resp.Result()
-			defer func(Body io.ReadCloser) {
-				_ = Body.Close()
-			}(res.Body)
 
 			if tt.code != http.StatusOK {
 				require.Equal(t, tt.code, res.StatusCode)
+				_ = res.Body.Close()
 				return
 			}
 			assert.Equal(
@@ -319,6 +317,7 @@ func TestMyServer_JSONGetHandler(t *testing.T) {
 			} else if tt.body.MType == storage.Counter {
 				assert.Equal(t, int64(25), *respData.Delta)
 			}
+			_ = res.Body.Close()
 		})
 	}
 }
@@ -428,12 +427,10 @@ func TestMyServer_JSONPostHandler(t *testing.T) {
 			s.router.ServeHTTP(resp, req)
 
 			res := resp.Result()
-			defer func(Body io.ReadCloser) {
-				_ = Body.Close()
-			}(res.Body)
 
 			if tt.code != http.StatusOK {
 				require.Equal(t, tt.code, res.StatusCode)
+				_ = res.Body.Close()
 				return
 			}
 			assert.Equal(
@@ -450,6 +447,7 @@ func TestMyServer_JSONPostHandler(t *testing.T) {
 			assert.NoError(t, err)
 
 			assert.True(t, reflect.DeepEqual(tt.body, respData), "json from response is not valid")
+			_ = res.Body.Close()
 		})
 	}
 }
