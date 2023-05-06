@@ -292,6 +292,9 @@ func TestMyServer_JSONGetHandler(t *testing.T) {
 			s.router.ServeHTTP(resp, req)
 
 			res := resp.Result()
+			defer func(Body io.ReadCloser) {
+				_ = Body.Close()
+			}(res.Body)
 
 			if tt.code != http.StatusOK {
 				require.Equal(t, tt.code, res.StatusCode)
@@ -425,6 +428,9 @@ func TestMyServer_JSONPostHandler(t *testing.T) {
 			s.router.ServeHTTP(resp, req)
 
 			res := resp.Result()
+			defer func(Body io.ReadCloser) {
+				_ = Body.Close()
+			}(res.Body)
 
 			if tt.code != http.StatusOK {
 				require.Equal(t, tt.code, res.StatusCode)
