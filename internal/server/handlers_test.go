@@ -14,6 +14,7 @@ import (
 	"log"
 	"net/http"
 	"net/http/httptest"
+	"reflect"
 	"strconv"
 	"strings"
 	"testing"
@@ -204,9 +205,10 @@ func TestMyServer_PostHandler(t *testing.T) {
 func TestMyServer_JSONGetHandler(t *testing.T) {
 
 	tests := []struct {
-		name string
-		code int
-		body jsonmodel.Metrics
+		name          string
+		code          int
+		body          jsonmodel.Metrics
+		withoutHeader bool
 	}{
 		{
 			name: "positive test 1: get gauge",
@@ -240,6 +242,29 @@ func TestMyServer_JSONGetHandler(t *testing.T) {
 				MType: "non-existent type",
 			},
 		},
+		{
+			name: "negative test 3: get without header Content-Type",
+			code: http.StatusNotFound,
+			body: jsonmodel.Metrics{
+				ID:    "name1",
+				MType: "counter",
+			},
+			withoutHeader: true,
+		},
+		{
+			name: "negative test 4: get without metric type",
+			code: http.StatusNotFound,
+			body: jsonmodel.Metrics{
+				ID: "name1",
+			},
+		},
+		{
+			name: "negative test 5: get without name",
+			code: http.StatusNotFound,
+			body: jsonmodel.Metrics{
+				MType: "counter",
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -257,7 +282,10 @@ func TestMyServer_JSONGetHandler(t *testing.T) {
 
 			buf := bytes.NewBuffer(body)
 			req := httptest.NewRequest(http.MethodPost, "http://localhost:8080/value/", buf)
-			req.Header.Set("Content-Type", "application/json")
+
+			if !tt.withoutHeader {
+				req.Header.Set("Content-Type", "application/json")
+			}
 
 			resp := httptest.NewRecorder()
 			s.router.Post("/value/", s.JSONGetHandler)
@@ -297,9 +325,10 @@ func TestMyServer_JSONPostHandler(t *testing.T) {
 	gauge := 55.2
 	counter := int64(55)
 	tests := []struct {
-		name string
-		code int
-		body jsonmodel.Metrics
+		name          string
+		code          int
+		body          jsonmodel.Metrics
+		withoutHeader bool
 	}{
 		{
 			name: "positive test 1: set gauge",
@@ -319,22 +348,59 @@ func TestMyServer_JSONPostHandler(t *testing.T) {
 				Delta: &counter,
 			},
 		},
-		//{
-		//	name: "negative test 1: get non-existent metric",
-		//	code: http.StatusNotFound,
-		//	body: jsonmodel.Metrics{
-		//		ID:    "name",
-		//		MType: "counter",
-		//	},
-		//},
-		//{
-		//	name: "negative test 2: get non-existent metric type",
-		//	code: http.StatusNotFound,
-		//	body: jsonmodel.Metrics{
-		//		ID:    "name1",
-		//		MType: "non-existent type",
-		//	},
-		//},
+		{
+			name: "negative test 1: set non-existent metric type",
+			code: http.StatusNotFound,
+			body: jsonmodel.Metrics{
+				ID:    "name",
+				MType: "non",
+				Delta: &counter,
+			},
+		},
+		{
+			name: "negative test 2: set gauge with nil value",
+			code: http.StatusNotFound,
+			body: jsonmodel.Metrics{
+				ID:    "name1",
+				MType: "gauge",
+				Delta: &counter,
+			},
+		},
+		{
+			name: "negative test 3: set counter with nil Delta",
+			code: http.StatusNotFound,
+			body: jsonmodel.Metrics{
+				ID:    "name1",
+				MType: "counter",
+				Value: &gauge,
+			},
+		},
+		{
+			name: "negative test 4: set with not valid content-type",
+			code: http.StatusNotFound,
+			body: jsonmodel.Metrics{
+				ID:    "name1",
+				MType: "counter",
+				Delta: &counter,
+			},
+			withoutHeader: true,
+		},
+		{
+			name: "negative test 5: set with nil value and delta",
+			code: http.StatusNotFound,
+			body: jsonmodel.Metrics{
+				ID:    "name1",
+				MType: "counter",
+			},
+		},
+		{
+			name: "negative test 6: set without metric type",
+			code: http.StatusNotFound,
+			body: jsonmodel.Metrics{
+				ID:    "name1",
+				Delta: &counter,
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -350,10 +416,12 @@ func TestMyServer_JSONPostHandler(t *testing.T) {
 
 			buf := bytes.NewBuffer(body)
 			req := httptest.NewRequest(http.MethodPost, "http://localhost:8080/update/", buf)
-			req.Header.Set("Content-Type", "application/json")
+			if !tt.withoutHeader {
+				req.Header.Set("Content-Type", "application/json")
+			}
 
 			resp := httptest.NewRecorder()
-			s.router.Post("/value/", s.JSONGetHandler)
+			s.router.Post("/update/", s.JSONPostHandler)
 			s.router.ServeHTTP(resp, req)
 
 			res := resp.Result()
@@ -367,20 +435,15 @@ func TestMyServer_JSONPostHandler(t *testing.T) {
 				"application/json; charset=utf-8",
 				res.Header.Get("Content-Type"),
 			)
-			body, err = io.ReadAll(res.Body)
+
+			returnedBody, err := io.ReadAll(res.Body)
 			assert.NoError(t, err)
 
 			respData := jsonmodel.Metrics{}
-			err = json.Unmarshal(body, &respData)
+			err = json.Unmarshal(returnedBody, &respData)
 			assert.NoError(t, err)
 
-			assert.Equal(t, tt.body.ID, respData.ID)
-			assert.Equal(t, tt.body.MType, respData.MType)
-			if tt.body.MType == storage.Gauge {
-				assert.Equal(t, 25.1, *respData.Value)
-			} else if tt.body.MType == storage.Counter {
-				assert.Equal(t, int64(25), *respData.Delta)
-			}
+			assert.True(t, reflect.DeepEqual(tt.body, respData), "json from response is not valid")
 		})
 	}
 }

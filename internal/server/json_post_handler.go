@@ -78,7 +78,7 @@ func (s *MyServer) JSONPostHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	default:
-		w.WriteHeader(http.StatusNotImplemented)
+		w.WriteHeader(http.StatusNotFound)
 		return
 	}
 	_, err = w.Write(buf)

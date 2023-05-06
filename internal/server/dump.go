@@ -3,6 +3,7 @@ package server
 import (
 	"encoding/json"
 	"github.com/Hauve/metricservice.git/internal/jsonmodel"
+	"github.com/Hauve/metricservice.git/internal/storage"
 	"log"
 	"os"
 	"time"
@@ -19,38 +20,44 @@ func (s *MyServer) dump() {
 			return
 		}
 
-		metricsFromFile := jsonmodel.Dump{}
+		dataForWriting := getAllDataForDump(s.storage)
 
-		gaugeNames := s.storage.GetGaugeKeys()
-		for _, name := range gaugeNames {
-			value, _ := s.storage.GetGauge(name)
-			metric := jsonmodel.Metrics{
-				ID:    name,
-				MType: "gauge",
-				Delta: nil,
-				Value: &value,
-			}
-			metricsFromFile = append(metricsFromFile, metric)
-		}
-
-		counterNames := s.storage.GetCounterKeys()
-		for _, name := range counterNames {
-			value, _ := s.storage.GetCounter(name)
-
-			metric := jsonmodel.Metrics{
-				ID:    name,
-				MType: "counter",
-				Delta: &value,
-				Value: nil,
-			}
-			metricsFromFile = append(metricsFromFile, metric)
-		}
-
-		if err = json.NewEncoder(file).Encode(&metricsFromFile); err != nil {
+		if err = json.NewEncoder(file).Encode(&dataForWriting); err != nil {
 			log.Printf("cannot encode json to dump file: %s", err)
 			return
 		}
 
 		_ = file.Close()
 	}
+}
+
+func getAllDataForDump(store storage.Storage) jsonmodel.Dump {
+	metricsForDumping := jsonmodel.Dump{}
+
+	gaugeNames := store.GetGaugeKeys()
+	for _, name := range gaugeNames {
+		value, _ := store.GetGauge(name)
+		metric := jsonmodel.Metrics{
+			ID:    name,
+			MType: "gauge",
+			Delta: nil,
+			Value: &value,
+		}
+		metricsForDumping = append(metricsForDumping, metric)
+	}
+
+	counterNames := store.GetCounterKeys()
+	for _, name := range counterNames {
+		value, _ := store.GetCounter(name)
+
+		metric := jsonmodel.Metrics{
+			ID:    name,
+			MType: "counter",
+			Delta: &value,
+			Value: nil,
+		}
+		metricsForDumping = append(metricsForDumping, metric)
+	}
+
+	return metricsForDumping
 }
