@@ -3,13 +3,13 @@ package sender
 import (
 	"fmt"
 	"github.com/Hauve/metricservice.git/internal/config"
-	"github.com/Hauve/metricservice.git/internal/storage"
+	"github.com/Hauve/metricservice.git/internal/jsonmodel"
 	"net/http"
 )
 
 type SimpleSender struct {
 	cfg    *config.AgentConfig
-	client clientDoer
+	client httpClient
 }
 
 func NewSimpleSender(cfg *config.AgentConfig) *SimpleSender {
@@ -19,8 +19,8 @@ func NewSimpleSender(cfg *config.AgentConfig) *SimpleSender {
 	}
 }
 
-func (m *SimpleSender) Send(name, value string, mt storage.MetricType) error {
-	url := fmt.Sprintf("http://%s/update/%s/%s/%s", m.cfg.Address, mt, name, value)
+func (m *SimpleSender) Send(mt jsonmodel.Metrics) error {
+	url := fmt.Sprintf("http://%s/update/%s/%s/%s", m.cfg.Address, mt.MType, mt.ID, mt.GetValue())
 
 	req, err := http.NewRequest(http.MethodPost, url, nil)
 	if err != nil {

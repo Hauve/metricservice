@@ -1,7 +1,7 @@
 package agent
 
 import (
-	"fmt"
+	"github.com/Hauve/metricservice.git/internal/jsonmodel"
 	"github.com/Hauve/metricservice.git/internal/storage"
 	"strconv"
 	"testing"
@@ -9,16 +9,7 @@ import (
 
 type senderForTest struct{}
 
-func (s *senderForTest) Send(_, value string, mt storage.MetricType) error {
-	if mt != "gauge" && mt != "counter" {
-		return fmt.Errorf("bad metric type")
-	}
-	if _, err := strconv.ParseFloat(value, 64); mt == "gauge" && err != nil {
-		return fmt.Errorf("bad value for gauge type: %w", err)
-	}
-	if _, err := strconv.ParseInt(value, 10, 64); mt == "counter" && err != nil {
-		return fmt.Errorf("bad value for gauge type: %w", err)
-	}
+func (s *senderForTest) Send(_ jsonmodel.Metrics) error {
 	return nil
 }
 

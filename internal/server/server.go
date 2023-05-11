@@ -6,6 +6,7 @@ import (
 	"github.com/Hauve/metricservice.git/internal/logger"
 	"github.com/Hauve/metricservice.git/internal/storage"
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 	"log"
 	"net/http"
 )
@@ -27,28 +28,35 @@ func New(cfg *config.ServerConfig, storage storage.Storage, router chi.Router, l
 }
 
 func (s *MyServer) Run() {
-	s.restore()
+	err := s.restore()
+	if err != nil {
+		s.logger.Fatalf("cannot restore data from file: %s", err)
+	}
+
 	s.registerRoutes()
 
-	go s.dump()
+	go s.runDumper()
 
-	err := http.ListenAndServe(s.cfg.Address, s.router)
+	err = http.ListenAndServe(s.cfg.Address, s.router)
 	if err != nil {
 		log.Fatalf("cannot ListenAndServe: %s", err)
 	}
 }
 
 func (s *MyServer) registerRoutes() {
-	s.router.Get("/value/{metricType}/{metricName}", s.logger.WithLogging(compression.WithGzip(s.GetHandler)))
-	s.router.Get("/value/{metricType}/{metricName}/", s.logger.WithLogging(compression.WithGzip(s.GetHandler)))
-	s.router.Get("/", s.logger.WithLogging(compression.WithGzip(s.GetAllHandler)))
-	s.router.Post("/update/{metricType}/{metricName}/{metricValue}", s.logger.WithLogging(compression.WithGzip(s.PostHandler)))
-	s.router.Post("/update/{metricType}/{metricName}/{metricValue}/", s.logger.WithLogging(compression.WithGzip(s.PostHandler)))
+	s.router.Use(middleware.StripSlashes)
+	s.router.Use(s.logger.WithLogging)
+	s.router.Use(compression.WithGzip)
 
-	s.router.Post("/update", s.logger.WithLogging(compression.WithGzip(s.JSONPostHandler)))
-	s.router.Post("/update/", s.logger.WithLogging(compression.WithGzip(s.JSONPostHandler)))
+	s.router.Route("/update", func(r chi.Router) {
+		r.Use(s.dumpToFileMiddleware)
+		r.Post("/update/{metricType}/{metricName}/{metricValue}", s.PostHandler)
+		r.Post("/update", s.JSONPostHandler)
+	})
 
-	s.router.Post("/value", s.logger.WithLogging(compression.WithGzip(s.JSONGetHandler)))
-	s.router.Post("/value/", s.logger.WithLogging(compression.WithGzip(s.JSONGetHandler)))
+	s.router.Get("/value/{metricType}/{metricName}", s.GetHandler)
+	s.router.Get("/", s.GetAllHandler)
+
+	s.router.Post("/value", s.JSONGetHandler)
 
 }

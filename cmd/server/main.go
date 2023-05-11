@@ -12,12 +12,13 @@ import (
 func main() {
 
 	cfg := config.LoadServerConfig()
-	st := storage.NewMemStorage()
-	r := chi.NewRouter()
 	lg, err := logger.New()
 	if err != nil {
 		log.Fatalf("Logger creating failed: %s", err)
 	}
+
+	st := storage.NewMemStorage()
+	r := chi.NewRouter()
 	serv := server.New(cfg, st, r, lg)
 	serv.Run()
 }

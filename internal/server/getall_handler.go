@@ -1,7 +1,6 @@
 package server
 
 import (
-	"fmt"
 	"html/template"
 	"log"
 	"net/http"
@@ -25,14 +24,8 @@ func (s *MyServer) GetAllHandler(w http.ResponseWriter, _ *http.Request) {
 		"counter": make(map[string]string),
 	}
 
-	for _, key := range s.storage.GetGaugeKeys() {
-		value, _ := s.storage.GetGauge(key)
-		data["gauge"][key] = fmt.Sprintf("%f", value)
-	}
-
-	for _, key := range s.storage.GetCounterKeys() {
-		value, _ := s.storage.GetCounter(key)
-		data["counter"][key] = fmt.Sprintf("%d", value)
+	for _, m := range s.storage.GetMetrics() {
+		data[m.MType][m.ID] = m.GetValue()
 	}
 
 	tmpl, err := template.New("metrics").Parse(htmlTmpl)

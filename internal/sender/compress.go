@@ -10,12 +10,10 @@ import (
 func compress(data []byte) ([]byte, error) {
 	var b bytes.Buffer
 	w := gzip.NewWriter(&b)
-	_, err := w.Write(data)
-	if err != nil {
+	if _, err := w.Write(data); err != nil {
 		return nil, fmt.Errorf("failed write data to compress temporary buffer: %w", err)
 	}
-	err = w.Close()
-	if err != nil {
+	if err := w.Close(); err != nil {
 		return nil, fmt.Errorf("failed compress data: %w", err)
 	}
 	return b.Bytes(), nil

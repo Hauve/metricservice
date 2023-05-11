@@ -8,11 +8,11 @@ import (
 	"strings"
 )
 
-func WithGzip(next http.HandlerFunc) http.HandlerFunc {
+func WithGzip(next http.Handler) http.Handler {
 	return withUnpackingGZIP(withPackingGZIP(next))
 }
 
-func withUnpackingGZIP(next http.Handler) http.HandlerFunc {
+func withUnpackingGZIP(next http.Handler) http.Handler {
 	compFn := func(w http.ResponseWriter, r *http.Request) {
 		var reader io.Reader
 		if r.Header.Get("Content-Encoding") == "gzip" {
@@ -30,10 +30,10 @@ func withUnpackingGZIP(next http.Handler) http.HandlerFunc {
 		r.Body = io.NopCloser(reader)
 		next.ServeHTTP(w, r)
 	}
-	return compFn
+	return http.HandlerFunc(compFn)
 }
 
-func withPackingGZIP(next http.Handler) http.HandlerFunc {
+func withPackingGZIP(next http.Handler) http.Handler {
 	compFn := func(w http.ResponseWriter, r *http.Request) {
 		if !strings.Contains(r.Header.Get("Accept-Encoding"), "gzip") {
 			next.ServeHTTP(w, r)
@@ -51,5 +51,5 @@ func withPackingGZIP(next http.Handler) http.HandlerFunc {
 		w.Header().Set("Content-Encoding", "gzip")
 		next.ServeHTTP(gzipWriter{ResponseWriter: w, Writer: gz}, r)
 	}
-	return compFn
+	return http.HandlerFunc(compFn)
 }

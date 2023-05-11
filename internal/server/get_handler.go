@@ -1,8 +1,7 @@
 package server
 
 import (
-	"fmt"
-	"github.com/Hauve/metricservice.git/internal/storage"
+	"github.com/Hauve/metricservice.git/internal/jsonmodel"
 	"github.com/go-chi/chi/v5"
 	"log"
 	"net/http"
@@ -18,27 +17,28 @@ func (s *MyServer) GetHandler(w http.ResponseWriter, r *http.Request) {
 
 	metricType := chi.URLParam(r, "metricType")
 	metricName := chi.URLParam(r, "metricName")
-	var metricValue string
+	var metric *jsonmodel.Metrics
+
 	var isMetricFound bool
 	switch metricType {
-	case storage.Gauge:
-		var val float64
-		val, isMetricFound = s.storage.GetGauge(metricName)
-		metricValue = fmt.Sprintf("%f", val)
-		for strings.HasSuffix(metricValue, "0") {
-			metricValue = strings.TrimSuffix(metricValue, "0")
-		}
-	case storage.Counter:
-		var val int64
-		val, isMetricFound = s.storage.GetCounter(metricName)
-		metricValue = fmt.Sprintf("%d", val)
+	case jsonmodel.Gauge:
+		metric, isMetricFound = s.storage.GetGauge(metricName)
+	case jsonmodel.Counter:
+		metric, isMetricFound = s.storage.GetCounter(metricName)
 	}
 	if !isMetricFound {
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
 
-	_, err := w.Write([]byte(metricValue))
+	// Created for stripping of zeroes for passing tests
+	res := metric.GetValue()
+	//for passing tests
+	for strings.HasSuffix(res, "0") {
+		res = strings.TrimSuffix(res, "0")
+	}
+
+	_, err := w.Write([]byte(res))
 	if err != nil {
 		log.Printf("cannot write response to the client: %s", err)
 	}

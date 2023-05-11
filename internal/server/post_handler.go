@@ -1,7 +1,7 @@
 package server
 
 import (
-	"github.com/Hauve/metricservice.git/internal/storage"
+	"github.com/Hauve/metricservice.git/internal/jsonmodel"
 	"github.com/go-chi/chi/v5"
 	"log"
 	"net/http"
@@ -19,7 +19,7 @@ func (s *MyServer) PostHandler(w http.ResponseWriter, r *http.Request) {
 	metricValue := chi.URLParam(r, "metricValue")
 
 	switch metricType {
-	case storage.Gauge:
+	case jsonmodel.Gauge:
 		valFloat, err := strconv.ParseFloat(metricValue, 64)
 		if err != nil {
 			log.Printf("ERROR: cannot parse gauge metric value: %s", err)
@@ -28,10 +28,10 @@ func (s *MyServer) PostHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		s.storage.SetGauge(metricName, valFloat)
 
-	case storage.Counter:
+	case jsonmodel.Counter:
 		valInt, err := strconv.ParseInt(metricValue, 10, 64)
 		if err != nil {
-			log.Printf("ERROR: cannot parse counter metric value: %s", err)
+			s.logger.Errorf("ERROR: cannot parse counter metric value: %s", err)
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}

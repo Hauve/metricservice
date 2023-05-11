@@ -25,6 +25,7 @@ func LoadServerConfig() *ServerConfig {
 	storeIntervalEnv, ok := os.LookupEnv("STORE_INTERVAL")
 	if ok {
 		temp, err := strconv.Atoi(storeIntervalEnv)
+		// Если ошибка, то остаётся значение по умолчанию. По этой причине не обрабатываю её
 		if err == nil {
 			*storeInterval = temp
 		}
@@ -38,6 +39,7 @@ func LoadServerConfig() *ServerConfig {
 	restoreEnv, ok := os.LookupEnv("RESTORE")
 	if ok {
 		temp, err := strconv.ParseBool(restoreEnv)
+		// Если ошибка, то остаётся значение по умолчанию. По этой причине не обрабатываю её
 		if err == nil {
 			*restore = temp
 		}

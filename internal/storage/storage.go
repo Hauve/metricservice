@@ -1,19 +1,13 @@
 package storage
 
-const (
-	Gauge   = MetricType("gauge")
-	Counter = MetricType("counter")
-)
+import "github.com/Hauve/metricservice.git/internal/jsonmodel"
 
 type Storage interface {
-	SetGauge(key string, val float64)
-	GetGauge(key string) (value float64, ok bool)
-	AddCounter(key string, val int64)
-	GetCounter(key string) (value int64, ok bool)
-	GetGaugeKeys() []string
-	GetCounterKeys() []string
+	SetGauge(string, float64)
+	GetGauge(string) (*jsonmodel.Metrics, bool)
+	AddCounter(string, int64)
+	GetCounter(string) (*jsonmodel.Metrics, bool)
+	SetCounter(string, int64)
 
-	SetCounter(key string, val int64)
+	GetMetrics() []*jsonmodel.Metrics
 }
-
-type MetricType = string

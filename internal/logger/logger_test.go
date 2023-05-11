@@ -14,7 +14,7 @@ func handlerForTest(w http.ResponseWriter, _ *http.Request) {
 
 func TestLogger_WithLogging(t *testing.T) {
 	type fields struct {
-		sugar zap.SugaredLogger
+		zap.SugaredLogger
 	}
 	tests := []struct {
 		name   string
@@ -23,16 +23,16 @@ func TestLogger_WithLogging(t *testing.T) {
 		{
 			name: "positive test",
 			fields: fields{
-				sugar: zap.SugaredLogger{},
+				SugaredLogger: zap.SugaredLogger{},
 			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			log := Logger{
-				sugar: tt.fields.sugar,
+				SugaredLogger: tt.fields.SugaredLogger,
 			}
-			_ = log.WithLogging(handlerForTest)
+			_ = log.WithLogging(http.HandlerFunc(handlerForTest))
 			t.SkipNow()
 		})
 	}

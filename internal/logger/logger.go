@@ -8,22 +8,21 @@ import (
 )
 
 type Logger struct {
-	sugar zap.SugaredLogger
+	zap.SugaredLogger
 }
 
 func New() (*Logger, error) {
 	log, err := zap.NewDevelopment()
 	if err != nil {
-		err = fmt.Errorf("logger creating failed: %w", err)
-		return nil, err
+		return nil, fmt.Errorf("logger creating failed: %w", err)
 	}
 	sug := log.Sugar()
 	return &Logger{
-		sugar: *sug,
+		SugaredLogger: *sug,
 	}, nil
 }
 
-func (log Logger) WithLogging(h http.HandlerFunc) http.HandlerFunc {
+func (log Logger) WithLogging(h http.Handler) http.Handler {
 	logFn := func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
 
@@ -39,7 +38,7 @@ func (log Logger) WithLogging(h http.HandlerFunc) http.HandlerFunc {
 
 		duration := time.Since(start)
 
-		log.sugar.Infoln(
+		log.Infoln(
 			"uri", r.RequestURI,
 			"method", r.Method,
 			"status", rData.status,
@@ -47,5 +46,5 @@ func (log Logger) WithLogging(h http.HandlerFunc) http.HandlerFunc {
 			"size", rData.size,
 		)
 	}
-	return logFn
+	return http.HandlerFunc(logFn)
 }
