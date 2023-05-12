@@ -24,3 +24,17 @@ func (m *Metrics) GetValue() string {
 	}
 	return fmt.Sprintf("%d", *m.Delta)
 }
+
+func (m *Metrics) IsValid() bool {
+	if m.MType == Gauge && m.Value != nil && m.Delta == nil {
+		return true
+	}
+	if m.MType == Counter && m.Value == nil && m.Delta != nil {
+		return true
+	}
+	return false
+}
+
+func (m *Metrics) IsFullFilled() bool {
+	return m.IsValid() && m.ID != ""
+}

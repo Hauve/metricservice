@@ -30,6 +30,9 @@ func (ag *MyAgent) Run() {
 		select {
 		case <-pollTicker.C:
 			ag.collectMetrics()
+			for _, m := range ag.storage.GetMetrics() {
+				log.Printf("%v", *m)
+			}
 		case <-reportTicker.C:
 			if err := ag.sendMetrics(); err != nil {
 				log.Printf("cannot process metrics: %s", err)

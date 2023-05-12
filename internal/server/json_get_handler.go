@@ -42,12 +42,10 @@ func (s *MyServer) JSONGetHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	metricType := data.MType
 	metricName := data.ID
-
 	var metric *jsonmodel.Metrics
 	isMetricFound := false
-	switch metricType {
+	switch data.MType {
 	case jsonmodel.Gauge:
 		metric, isMetricFound = s.storage.GetGauge(metricName)
 	case jsonmodel.Counter:
@@ -60,7 +58,7 @@ func (s *MyServer) JSONGetHandler(w http.ResponseWriter, r *http.Request) {
 	metric.MType = data.MType
 	metric.ID = data.ID
 
-	buf, err = json.Marshal(data)
+	buf, err = json.Marshal(metric)
 	if err != nil {
 		s.logger.Errorf("ERROR: cannot encode data to json in reply: %s", err)
 		w.WriteHeader(http.StatusInternalServerError)

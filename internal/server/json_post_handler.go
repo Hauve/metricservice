@@ -20,14 +20,13 @@ func (s *MyServer) JSONPostHandler(w http.ResponseWriter, r *http.Request) {
 	header.Set("Content-Type", "application/json; charset=utf-8")
 	header.Set("Date", time.Now().String())
 
-	body := r.Body
-	buf, err := io.ReadAll(body)
+	buf, err := io.ReadAll(r.Body)
 	if err != nil {
 		s.logger.Errorf("ERROR: cannot read from body: %s", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	err = body.Close()
+	err = r.Body.Close()
 	if err != nil {
 		s.logger.Errorf("cannot close body of request: %s", err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -41,8 +40,8 @@ func (s *MyServer) JSONPostHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if data.Value == nil && data.Delta == nil {
-		s.logger.Errorf("got incorrect json: value and delta are nil")
+	if !data.IsFullFilled() {
+		s.logger.Errorf("got incorrect metrics json")
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
@@ -50,18 +49,8 @@ func (s *MyServer) JSONPostHandler(w http.ResponseWriter, r *http.Request) {
 	metricName := data.ID
 	switch data.MType {
 	case jsonmodel.Gauge:
-		if data.Value == nil {
-			s.logger.Errorf("got incorrect json: type='gauge', but value is nil")
-			w.WriteHeader(http.StatusNotFound)
-			return
-		}
 		s.storage.SetGauge(metricName, *data.Value)
 	case jsonmodel.Counter:
-		if data.Delta == nil {
-			s.logger.Errorf("got incorrect json: type='counter', but delta is nil")
-			w.WriteHeader(http.StatusNotFound)
-			return
-		}
 		s.storage.AddCounter(metricName, *data.Delta)
 		temp, _ := s.storage.GetCounter(metricName)
 		data.Delta = temp.Delta

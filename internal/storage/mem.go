@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"fmt"
 	"github.com/Hauve/metricservice.git/internal/jsonmodel"
 )
 
@@ -58,7 +59,8 @@ func (st *MemStorage) GetMetrics() []*jsonmodel.Metrics {
 	}
 
 	for key := range st.gauge {
-		if m, ok := st.GetCounter(key); ok {
+		if m, ok := st.GetGauge(key); ok {
+			fmt.Printf("%v\n", *m)
 			res = append(res, m)
 		}
 	}
