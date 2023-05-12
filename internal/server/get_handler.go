@@ -34,8 +34,10 @@ func (s *MyServer) GetHandler(w http.ResponseWriter, r *http.Request) {
 	// Created for stripping of zeroes for passing tests
 	res := metric.GetValue()
 	//for passing tests
-	for strings.HasSuffix(res, "0") {
-		res = strings.TrimSuffix(res, "0")
+	if metric.MType == jsonmodel.Gauge {
+		for strings.HasSuffix(res, "0") {
+			res = strings.TrimSuffix(res, "0")
+		}
 	}
 
 	_, err := w.Write([]byte(res))
