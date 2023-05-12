@@ -26,6 +26,7 @@ func (st *MemStorage) GetGauge(key string) (value *jsonmodel.Metrics, ok bool) {
 		return nil, false
 	}
 	return &jsonmodel.Metrics{
+		ID:    key,
 		MType: jsonmodel.Gauge,
 		Value: &val,
 	}, true
@@ -41,6 +42,7 @@ func (st *MemStorage) GetCounter(key string) (value *jsonmodel.Metrics, ok bool)
 		return nil, false
 	}
 	return &jsonmodel.Metrics{
+		ID:    key,
 		MType: jsonmodel.Counter,
 		Delta: &val,
 	}, true
