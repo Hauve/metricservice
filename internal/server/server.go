@@ -45,18 +45,16 @@ func (s *MyServer) Run() {
 
 func (s *MyServer) registerRoutes() {
 	s.router.Use(middleware.StripSlashes)
+	s.router.Use(s.logger.WithLogging)
+	s.router.Use(compression.WithGzip)
 
 	s.router.Get("/", s.GetAllHandler)
 	s.router.Route("/update", func(r chi.Router) {
-		s.router.Use(s.logger.WithLogging)
-		s.router.Use(compression.WithGzip)
 		r.Use(s.dumpToFileMiddleware)
 		r.Post("/update/{metricType}/{metricName}/{metricValue}", s.PostHandler)
 		r.Post("/update", s.JSONPostHandler)
 	})
 
-	s.router.Use(s.logger.WithLogging)
-	s.router.Use(compression.WithGzip)
 	s.router.Get("/value/{metricType}/{metricName}", s.GetHandler)
 	s.router.Post("/value", s.JSONGetHandler)
 

@@ -2,8 +2,10 @@ package server
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/Hauve/metricservice.git/internal/jsonmodel"
+	"io/fs"
 	"os"
 )
 
@@ -12,9 +14,16 @@ func (s *MyServer) restore() (err error) {
 		return
 	}
 	file, err := os.Open(s.cfg.FileStoragePath)
+
 	if err != nil {
+		if errors.Is(err, fs.ErrNotExist) {
+			// Чтобы избежать fatal при несуществующем файле для restore
+			s.logger.Warnf("file for restoring is not exsists")
+			return nil
+		}
 		return fmt.Errorf("cant open dump file for restoring: %w", err)
 	}
+
 	defer func() {
 		if err = file.Close(); err != nil {
 			err = fmt.Errorf("cannot close file: %w", err)
