@@ -51,8 +51,8 @@ func (s *MyServer) registerRoutes() {
 	s.router.Get("/", s.GetAllHandler)
 	s.router.Route("/update", func(r chi.Router) {
 		r.Use(s.dumpToFileMiddleware)
-		r.Post("/update/{metricType}/{metricName}/{metricValue}", s.PostHandler)
-		r.Post("/update", s.JSONPostHandler)
+		r.Post("/{metricType}/{metricName}/{metricValue}", s.PostHandler)
+		r.Post("/", s.JSONPostHandler)
 	})
 
 	s.router.Get("/value/{metricType}/{metricName}", s.GetHandler)
