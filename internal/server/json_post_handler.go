@@ -47,26 +47,22 @@ func (s *MyServer) JSONPostHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	metricType := data.MType
 	metricName := data.ID
-
-	switch metricType {
+	switch data.MType {
 	case jsonmodel.Gauge:
 		if data.Value == nil {
 			s.logger.Errorf("got incorrect json: type='gauge', but value is nil")
 			w.WriteHeader(http.StatusNotFound)
 			return
 		}
-		valFloat := data.Value
-		s.storage.SetGauge(metricName, *valFloat)
+		s.storage.SetGauge(metricName, *data.Value)
 	case jsonmodel.Counter:
 		if data.Delta == nil {
 			s.logger.Errorf("got incorrect json: type='counter', but delta is nil")
 			w.WriteHeader(http.StatusNotFound)
 			return
 		}
-		valInt := data.Delta
-		s.storage.AddCounter(metricName, *valInt)
+		s.storage.AddCounter(metricName, *data.Delta)
 		temp, _ := s.storage.GetCounter(metricName)
 		data.Delta = temp.Delta
 		buf, err = json.Marshal(data)

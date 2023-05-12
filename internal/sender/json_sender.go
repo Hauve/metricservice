@@ -21,7 +21,7 @@ func NewJSONSender(cfg *config.AgentConfig) *JSONSender {
 	}
 }
 
-func (m *JSONSender) Send(mt jsonmodel.Metrics) error {
+func (m *JSONSender) Send(mt jsonmodel.Metrics) (err error) {
 
 	url := fmt.Sprintf("http://%s/update/", m.cfg.Address)
 
