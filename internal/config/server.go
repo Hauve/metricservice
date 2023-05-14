@@ -12,6 +12,8 @@ type ServerConfig struct {
 	StoreInterval   time.Duration
 	FileStoragePath string
 	Restore         bool
+
+	DatabaseDSN string
 }
 
 func LoadServerConfig() *ServerConfig {
@@ -20,6 +22,8 @@ func LoadServerConfig() *ServerConfig {
 	storeInterval := flag.Int("i", 300, "store interval")
 	filePath := flag.String("f", "/tmp/metrics-db.json", "file storage path")
 	restore := flag.Bool("r", true, "restore")
+
+	dbString := flag.String("d", "", "database dsn")
 	flag.Parse()
 
 	storeIntervalEnv, ok := os.LookupEnv("STORE_INTERVAL")
@@ -50,10 +54,16 @@ func LoadServerConfig() *ServerConfig {
 		*address = addrEnv
 	}
 
+	dbEnv, ok := os.LookupEnv("DATABASE_DSN")
+	if ok {
+		*dbString = dbEnv
+	}
+
 	return &ServerConfig{
 		Address:         *address,
 		StoreInterval:   time.Duration(*storeInterval) * time.Second,
 		FileStoragePath: *filePath,
 		Restore:         *restore,
+		DatabaseDSN:     *dbString,
 	}
 }
