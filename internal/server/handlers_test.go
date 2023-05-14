@@ -1,7 +1,11 @@
 package server
 
 import (
+	"bytes"
+	"encoding/json"
 	"github.com/Hauve/metricservice.git/internal/config"
+	"github.com/Hauve/metricservice.git/internal/jsonmodel"
+	"github.com/Hauve/metricservice.git/internal/logger"
 	"github.com/Hauve/metricservice.git/internal/storage"
 	"github.com/go-chi/chi/v5"
 	"github.com/stretchr/testify/assert"
@@ -10,12 +14,13 @@ import (
 	"log"
 	"net/http"
 	"net/http/httptest"
+	"reflect"
 	"strconv"
 	"strings"
 	"testing"
 )
 
-func TestService_GetHandler(t *testing.T) {
+func TestMyServer_GetHandler(t *testing.T) {
 	type want struct {
 		code  int
 		value string
@@ -53,17 +58,21 @@ func TestService_GetHandler(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			lg, err := logger.New()
+			require.NoError(t, err)
+
 			s := &MyServer{
 				cfg: &config.ServerConfig{
 					Address: "http://localhost:8080",
 				},
 				storage: storage.NewMemStorage(),
 				router:  chi.NewRouter(),
+				logger:  *lg,
 			}
 			s.storage.SetGauge("Key1", 25.1)
 			s.storage.AddCounter("Key1", 1)
 
-			s.registerRoutes()
+			s.router.Get("/value/{metricType}/{metricName}", s.GetHandler)
 
 			req := httptest.NewRequest(http.MethodGet, s.cfg.Address+tt.path, nil)
 			resp := httptest.NewRecorder()
@@ -88,7 +97,7 @@ func TestService_GetHandler(t *testing.T) {
 	}
 }
 
-func TestService_PostHandler(t *testing.T) {
+func TestMyServer_PostHandler(t *testing.T) {
 	type want struct {
 		code int
 	}
@@ -135,15 +144,19 @@ func TestService_PostHandler(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			lg, err := logger.New()
+			require.NoError(t, err)
+
 			s := &MyServer{
 				cfg: &config.ServerConfig{
 					Address: "http://localhost:8080",
 				},
 				storage: storage.NewMemStorage(),
 				router:  chi.NewRouter(),
+				logger:  *lg,
 			}
 
-			s.registerRoutes()
+			s.router.Post("/update/{metricType}/{metricName}/{metricValue}", s.PostHandler)
 
 			req := httptest.NewRequest(http.MethodPost, s.cfg.Address+tt.path, nil)
 			resp := httptest.NewRecorder()
@@ -181,10 +194,260 @@ func TestService_PostHandler(t *testing.T) {
 			}
 
 			//static test gives warning with closing through defer
-			err := res.Body.Close()
+			err = res.Body.Close()
 			if err != nil {
 				log.Printf("%e", err)
 			}
+		})
+	}
+}
+
+func TestMyServer_JSONGetHandler(t *testing.T) {
+
+	tests := []struct {
+		name          string
+		code          int
+		body          jsonmodel.Metrics
+		withoutHeader bool
+	}{
+		{
+			name: "positive test 1: get gauge",
+			code: http.StatusOK,
+			body: jsonmodel.Metrics{
+				ID:    "name1",
+				MType: "gauge",
+			},
+		},
+		{
+			name: "positive test 2: get counter",
+			code: http.StatusOK,
+			body: jsonmodel.Metrics{
+				ID:    "name1",
+				MType: "counter",
+			},
+		},
+		{
+			name: "negative test 1: get non-existent metric",
+			code: http.StatusNotFound,
+			body: jsonmodel.Metrics{
+				ID:    "name",
+				MType: "counter",
+			},
+		},
+		{
+			name: "negative test 2: get non-existent metric type",
+			code: http.StatusNotFound,
+			body: jsonmodel.Metrics{
+				ID:    "name1",
+				MType: "non-existent type",
+			},
+		},
+		{
+			name: "negative test 3: get without header Content-Type",
+			code: http.StatusNotFound,
+			body: jsonmodel.Metrics{
+				ID:    "name1",
+				MType: "counter",
+			},
+			withoutHeader: true,
+		},
+		{
+			name: "negative test 4: get without metric type",
+			code: http.StatusNotFound,
+			body: jsonmodel.Metrics{
+				ID: "name1",
+			},
+		},
+		{
+			name: "negative test 5: get without name",
+			code: http.StatusNotFound,
+			body: jsonmodel.Metrics{
+				MType: "counter",
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tempLog, _ := logger.New()
+			s := &MyServer{
+				logger:  *tempLog,
+				storage: storage.NewMemStorage(),
+				router:  chi.NewRouter(),
+			}
+			s.storage.SetGauge("name1", 25.1)
+			s.storage.SetCounter("name1", 25)
+
+			body, err := json.Marshal(tt.body)
+			if err != nil {
+				t.Errorf("json marshalling failed: %s", err)
+			}
+
+			buf := bytes.NewBuffer(body)
+			req := httptest.NewRequest(http.MethodPost, "http://localhost:8080/value/", buf)
+
+			if !tt.withoutHeader {
+				req.Header.Set("Content-Type", "application/json")
+			}
+
+			resp := httptest.NewRecorder()
+			s.router.Post("/value/", s.JSONGetHandler)
+			s.router.ServeHTTP(resp, req)
+
+			res := resp.Result()
+
+			if tt.code != http.StatusOK {
+				require.Equal(t, tt.code, res.StatusCode)
+				_ = res.Body.Close()
+				return
+			}
+			assert.Equal(
+				t,
+				"application/json; charset=utf-8",
+				res.Header.Get("Content-Type"),
+			)
+			body, err = io.ReadAll(res.Body)
+			assert.NoError(t, err)
+
+			respData := jsonmodel.Metrics{}
+			err = json.Unmarshal(body, &respData)
+			assert.NoError(t, err)
+
+			assert.Equal(t, tt.body.ID, respData.ID)
+			assert.Equal(t, tt.body.MType, respData.MType)
+
+			_ = res.Body.Close()
+		})
+	}
+}
+
+func TestMyServer_JSONPostHandler(t *testing.T) {
+
+	gauge := 55.2
+	counter := int64(55)
+	tests := []struct {
+		name          string
+		code          int
+		body          jsonmodel.Metrics
+		withoutHeader bool
+	}{
+		{
+			name: "positive test 1: set gauge",
+			code: http.StatusOK,
+			body: jsonmodel.Metrics{
+				ID:    "name1",
+				MType: "gauge",
+				Value: &gauge,
+			},
+		},
+		{
+			name: "positive test 2: set counter",
+			code: http.StatusOK,
+			body: jsonmodel.Metrics{
+				ID:    "name1",
+				MType: "counter",
+				Delta: &counter,
+			},
+		},
+		{
+			name: "negative test 1: set non-existent metric type",
+			code: http.StatusNotFound,
+			body: jsonmodel.Metrics{
+				ID:    "name",
+				MType: "non",
+				Delta: &counter,
+			},
+		},
+		{
+			name: "negative test 2: set gauge with nil value",
+			code: http.StatusNotFound,
+			body: jsonmodel.Metrics{
+				ID:    "name1",
+				MType: "gauge",
+				Delta: &counter,
+			},
+		},
+		{
+			name: "negative test 3: set counter with nil Delta",
+			code: http.StatusNotFound,
+			body: jsonmodel.Metrics{
+				ID:    "name1",
+				MType: "counter",
+				Value: &gauge,
+			},
+		},
+		{
+			name: "negative test 4: set with not valid content-type",
+			code: http.StatusNotFound,
+			body: jsonmodel.Metrics{
+				ID:    "name1",
+				MType: "counter",
+				Delta: &counter,
+			},
+			withoutHeader: true,
+		},
+		{
+			name: "negative test 5: set with nil value and delta",
+			code: http.StatusNotFound,
+			body: jsonmodel.Metrics{
+				ID:    "name1",
+				MType: "counter",
+			},
+		},
+		{
+			name: "negative test 6: set without metric type",
+			code: http.StatusNotFound,
+			body: jsonmodel.Metrics{
+				ID:    "name1",
+				Delta: &counter,
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tempLog, _ := logger.New()
+			s := &MyServer{
+				logger:  *tempLog,
+				storage: storage.NewMemStorage(),
+				router:  chi.NewRouter(),
+			}
+
+			body, err := json.Marshal(tt.body)
+			if err != nil {
+				t.Errorf("json marshalling failed: %s", err)
+			}
+
+			buf := bytes.NewBuffer(body)
+			req := httptest.NewRequest(http.MethodPost, "http://localhost:8080/update/", buf)
+			if !tt.withoutHeader {
+				req.Header.Set("Content-Type", "application/json")
+			}
+
+			resp := httptest.NewRecorder()
+			s.router.Post("/update/", s.JSONPostHandler)
+			s.router.ServeHTTP(resp, req)
+
+			res := resp.Result()
+
+			if tt.code != http.StatusOK {
+				require.Equal(t, tt.code, res.StatusCode)
+				_ = res.Body.Close()
+				return
+			}
+			assert.Equal(
+				t,
+				"application/json; charset=utf-8",
+				res.Header.Get("Content-Type"),
+			)
+
+			returnedBody, err := io.ReadAll(res.Body)
+			assert.NoError(t, err)
+
+			respData := jsonmodel.Metrics{}
+			err = json.Unmarshal(returnedBody, &respData)
+			assert.NoError(t, err)
+
+			assert.True(t, reflect.DeepEqual(tt.body, respData), "json from response is not valid")
+			_ = res.Body.Close()
 		})
 	}
 }

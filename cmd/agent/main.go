@@ -13,8 +13,8 @@ func main() {
 	if err != nil {
 		log.Fatalf("cannot load config: %s", err)
 	}
-	storage := storage.NewMemStorage()
-	sender := sender.NewSender(cfg)
-	ag := agent.New(cfg, storage, sender)
+	st := storage.NewMemStorage()
+	snd := sender.NewJSONSender(cfg)
+	ag := agent.New(cfg, st, snd)
 	ag.Run()
 }

@@ -11,10 +11,10 @@ import (
 type MyAgent struct {
 	cfg     *config.AgentConfig
 	storage storage.Storage
-	sender  *sender.Sender
+	sender  sender.Sender
 }
 
-func New(cfg *config.AgentConfig, storage storage.Storage, sender *sender.Sender) *MyAgent {
+func New(cfg *config.AgentConfig, storage storage.Storage, sender sender.Sender) *MyAgent {
 	return &MyAgent{
 		cfg:     cfg,
 		storage: storage,
@@ -30,6 +30,9 @@ func (ag *MyAgent) Run() {
 		select {
 		case <-pollTicker.C:
 			ag.collectMetrics()
+			for _, m := range ag.storage.GetMetrics() {
+				log.Printf("%v", *m)
+			}
 		case <-reportTicker.C:
 			if err := ag.sendMetrics(); err != nil {
 				log.Printf("cannot process metrics: %s", err)

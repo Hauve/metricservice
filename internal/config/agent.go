@@ -47,6 +47,6 @@ func LoadAgentConfig() (*AgentConfig, error) {
 	return &AgentConfig{
 		Address:        *address,
 		PoolInterval:   time.Duration(*pollInterval) * time.Second,
-		ReportInterval: time.Duration(*pollInterval) * time.Second,
+		ReportInterval: time.Duration(*reportInterval) * time.Second,
 	}, nil
 }
