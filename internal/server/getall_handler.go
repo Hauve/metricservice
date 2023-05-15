@@ -1,8 +1,8 @@
 package server
 
 import (
+	"github.com/Hauve/metricservice.git/internal/logger"
 	"html/template"
-	"log"
 	"net/http"
 	"time"
 )
@@ -30,13 +30,13 @@ func (s *MyServer) GetAllHandler(w http.ResponseWriter, _ *http.Request) {
 
 	tmpl, err := template.New("metrics").Parse(htmlTmpl)
 	if err != nil {
-		log.Printf("cannot parse html template: %s", err)
+		logger.Log.Errorf("cannot parse html template: %s", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
 	if err = tmpl.Execute(w, data); err != nil {
-		log.Printf("cannot write content to the client: %s", err)
+		logger.Log.Errorf("cannot write content to the client: %s", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}

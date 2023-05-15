@@ -1,12 +1,14 @@
 package server
 
 import (
+	"database/sql"
 	"github.com/Hauve/metricservice.git/internal/compression"
 	"github.com/Hauve/metricservice.git/internal/config"
 	"github.com/Hauve/metricservice.git/internal/logger"
 	"github.com/Hauve/metricservice.git/internal/storage"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	_ "github.com/jackc/pgx/v5/stdlib"
 	"log"
 	"net/http"
 )
@@ -15,37 +17,35 @@ type MyServer struct {
 	cfg     *config.ServerConfig
 	storage storage.Storage
 	router  chi.Router
-	logger  logger.Logger
+
+	db *sql.DB
 }
 
-func New(cfg *config.ServerConfig, storage storage.Storage, router chi.Router, log *logger.Logger) *MyServer {
+func New(cfg *config.ServerConfig, storage storage.Storage, router chi.Router, db *sql.DB) *MyServer {
 	return &MyServer{
 		cfg:     cfg,
 		storage: storage,
 		router:  router,
-		logger:  *log,
+		db:      db,
 	}
 }
 
 func (s *MyServer) Run() {
-	err := s.restore()
-	if err != nil {
-		s.logger.Fatalf("cannot restore data from file: %s", err)
+	if err := s.restore(); err != nil {
+		logger.Log.Fatalf("cannot restore data from file: %s", err)
 	}
+	go s.runDumper()
 
 	s.registerRoutes()
 
-	go s.runDumper()
-
-	err = http.ListenAndServe(s.cfg.Address, s.router)
-	if err != nil {
+	if err := http.ListenAndServe(s.cfg.Address, s.router); err != nil {
 		log.Fatalf("cannot ListenAndServe: %s", err)
 	}
 }
 
 func (s *MyServer) registerRoutes() {
 	s.router.Use(middleware.StripSlashes)
-	s.router.Use(s.logger.WithLogging)
+	s.router.Use(logger.Log.WithLogging)
 	s.router.Use(compression.WithGzip)
 
 	s.router.Get("/", s.GetAllHandler)
@@ -57,5 +57,7 @@ func (s *MyServer) registerRoutes() {
 
 	s.router.Get("/value/{metricType}/{metricName}", s.GetHandler)
 	s.router.Post("/value", s.JSONGetHandler)
+
+	s.router.Get("/ping", s.Ping)
 
 }

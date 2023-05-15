@@ -4,7 +4,6 @@ import "fmt"
 
 func (ag *MyAgent) sendMetrics() error {
 	for _, m := range ag.storage.GetMetrics() {
-		fmt.Printf("%v\n", *m)
 		if err := ag.sender.Send(*m); err != nil {
 			return fmt.Errorf("cannot send metric: %w", err)
 		}

@@ -2,6 +2,7 @@ package server
 
 import (
 	"github.com/Hauve/metricservice.git/internal/jsonmodel"
+	"github.com/Hauve/metricservice.git/internal/logger"
 	"github.com/go-chi/chi/v5"
 	"log"
 	"net/http"
@@ -31,7 +32,7 @@ func (s *MyServer) PostHandler(w http.ResponseWriter, r *http.Request) {
 	case jsonmodel.Counter:
 		valInt, err := strconv.ParseInt(metricValue, 10, 64)
 		if err != nil {
-			s.logger.Errorf("ERROR: cannot parse counter metric value: %s", err)
+			logger.Log.Errorf("ERROR: cannot parse counter metric value: %s", err)
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
