@@ -17,13 +17,18 @@ type Storage interface {
 }
 
 func GetStorage(databaseDSN string) (*MemStorage, *Database, *sql.DB) {
+	db, err := sql.Open("pgx", databaseDSN)
+	if err != nil {
+		log.Fatalf("unable to open sql database: %s", err)
+	}
+
 	if databaseDSN == "" {
-		return NewMemStorage(), nil, nil
+		return NewMemStorage(), nil, db
 	} else {
-		db, err := sql.Open("pgx", databaseDSN)
+		dbStorage, err := NewDatabase(db)
 		if err != nil {
-			log.Fatalf("unable to open sql database: %s", err)
+			log.Fatalf("cannot create database storage: %s", err)
 		}
-		return nil, NewDatabase(db), db
+		return nil, dbStorage, db
 	}
 }
