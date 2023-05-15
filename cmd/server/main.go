@@ -17,8 +17,16 @@ func main() {
 		log.Fatalf("Logger creating failed: %s", err)
 	}
 
-	st := storage.NewMemStorage()
 	r := chi.NewRouter()
-	serv := server.New(cfg, st, r, lg)
+
+	storageDB, storageMem, db := storage.GetStorage(cfg.DatabaseDSN)
+
+	var serv *server.MyServer
+	if storageDB == nil {
+		serv = server.New(cfg, storageMem, r, lg, db)
+	} else if storageMem == nil {
+		serv = server.New(cfg, storageDB, r, lg, db)
+	}
+
 	serv.Run()
 }

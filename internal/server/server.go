@@ -24,32 +24,25 @@ type MyServer struct {
 	db *sql.DB
 }
 
-func New(cfg *config.ServerConfig, storage storage.Storage, router chi.Router, log *logger.Logger) *MyServer {
+func New(cfg *config.ServerConfig, storage storage.Storage, router chi.Router, log *logger.Logger, db *sql.DB) *MyServer {
 	return &MyServer{
 		cfg:     cfg,
 		storage: storage,
 		router:  router,
 		logger:  *log,
+		db:      db,
 	}
 }
 
 func (s *MyServer) Run() {
-	var err error
-	s.db, err = sql.Open("pgx", s.cfg.DatabaseDSN)
-	if err != nil {
-		s.logger.Errorf("cannot open database: %s", err)
-	}
-
-	if err = s.restore(); err != nil {
+	if err := s.restore(); err != nil {
 		s.logger.Fatalf("cannot restore data from file: %s", err)
 	}
+	go s.runDumper()
 
 	s.registerRoutes()
 
-	go s.runDumper()
-
-	err = http.ListenAndServe(s.cfg.Address, s.router)
-	if err != nil {
+	if err := http.ListenAndServe(s.cfg.Address, s.router); err != nil {
 		log.Fatalf("cannot ListenAndServe: %s", err)
 	}
 }
@@ -76,6 +69,12 @@ func (s *MyServer) registerRoutes() {
 func (s *MyServer) Ping(w http.ResponseWriter, _ *http.Request) {
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()
+	if s.db == nil {
+		s.logger.Info(s.cfg.DatabaseDSN)
+		s.logger.Warnf("Ping connect failed: database is nil")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
 	if err := s.db.PingContext(ctx); err != nil {
 		s.logger.Info(s.cfg.DatabaseDSN)
 		s.logger.Warnf("Ping connect failed: %s", err)
