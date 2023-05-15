@@ -1,7 +1,6 @@
 package server
 
 import (
-	"context"
 	"database/sql"
 	"github.com/Hauve/metricservice.git/internal/compression"
 	"github.com/Hauve/metricservice.git/internal/config"
@@ -12,31 +11,28 @@ import (
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"log"
 	"net/http"
-	"time"
 )
 
 type MyServer struct {
 	cfg     *config.ServerConfig
 	storage storage.Storage
 	router  chi.Router
-	logger  logger.Logger
 
 	db *sql.DB
 }
 
-func New(cfg *config.ServerConfig, storage storage.Storage, router chi.Router, log *logger.Logger, db *sql.DB) *MyServer {
+func New(cfg *config.ServerConfig, storage storage.Storage, router chi.Router, db *sql.DB) *MyServer {
 	return &MyServer{
 		cfg:     cfg,
 		storage: storage,
 		router:  router,
-		logger:  *log,
 		db:      db,
 	}
 }
 
 func (s *MyServer) Run() {
 	if err := s.restore(); err != nil {
-		s.logger.Fatalf("cannot restore data from file: %s", err)
+		logger.Log.Fatalf("cannot restore data from file: %s", err)
 	}
 	go s.runDumper()
 
@@ -49,7 +45,7 @@ func (s *MyServer) Run() {
 
 func (s *MyServer) registerRoutes() {
 	s.router.Use(middleware.StripSlashes)
-	s.router.Use(s.logger.WithLogging)
+	s.router.Use(logger.Log.WithLogging)
 	s.router.Use(compression.WithGzip)
 
 	s.router.Get("/", s.GetAllHandler)
@@ -64,21 +60,4 @@ func (s *MyServer) registerRoutes() {
 
 	s.router.Get("/ping", s.Ping)
 
-}
-
-func (s *MyServer) Ping(w http.ResponseWriter, _ *http.Request) {
-	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
-	defer cancel()
-	if s.db == nil {
-		s.logger.Info(s.cfg.DatabaseDSN)
-		s.logger.Warnf("Ping connect failed: database is nil")
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-	if err := s.db.PingContext(ctx); err != nil {
-		s.logger.Info(s.cfg.DatabaseDSN)
-		s.logger.Warnf("Ping connect failed: %s", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
 }

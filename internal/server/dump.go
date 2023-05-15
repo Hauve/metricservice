@@ -3,6 +3,7 @@ package server
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/Hauve/metricservice.git/internal/logger"
 	"net/http"
 	"os"
 	"time"
@@ -11,7 +12,7 @@ import (
 func (s *MyServer) dump() {
 	if s.cfg.StoreInterval == 0 {
 		if err := s.dumpToFile(); err != nil {
-			s.logger.Fatalf("cannot dump metric to file: %s", err)
+			logger.Log.Fatalf("cannot dump metric to file: %s", err)
 		}
 		return
 	}
@@ -23,7 +24,7 @@ func (s *MyServer) runDumper() {
 		for {
 			<-ticker.C
 			if err := s.dumpToFile(); err != nil {
-				s.logger.Fatalf("cannot dump metric to file: %s", err)
+				logger.Log.Fatalf("cannot dump metric to file: %s", err)
 			}
 		}
 	}

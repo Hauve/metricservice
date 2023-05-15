@@ -3,20 +3,31 @@ package logger
 import (
 	"fmt"
 	"go.uber.org/zap"
+	"log"
 	"net/http"
 	"time"
 )
+
+var Log *Logger
+
+func init() {
+	temp, err := New()
+	if err != nil {
+		log.Fatalf("Logger creating failed: %s", err)
+	}
+	Log = temp
+}
 
 type Logger struct {
 	zap.SugaredLogger
 }
 
 func New() (*Logger, error) {
-	log, err := zap.NewDevelopment()
+	logger, err := zap.NewDevelopment()
 	if err != nil {
 		return nil, fmt.Errorf("logger creating failed: %w", err)
 	}
-	sug := log.Sugar()
+	sug := logger.Sugar()
 	return &Logger{
 		SugaredLogger: *sug,
 	}, nil

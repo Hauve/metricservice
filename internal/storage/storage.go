@@ -3,7 +3,7 @@ package storage
 import (
 	"database/sql"
 	"github.com/Hauve/metricservice.git/internal/jsonmodel"
-	"log"
+	"github.com/Hauve/metricservice.git/internal/logger"
 )
 
 type Storage interface {
@@ -19,7 +19,7 @@ type Storage interface {
 func GetStorage(databaseDSN string) (*MemStorage, *Database, *sql.DB) {
 	db, err := sql.Open("pgx", databaseDSN)
 	if err != nil {
-		log.Fatalf("unable to open sql database: %s", err)
+		logger.Log.Fatalf("unable to open sql database: %s", err)
 	}
 
 	if databaseDSN == "" {
@@ -27,7 +27,7 @@ func GetStorage(databaseDSN string) (*MemStorage, *Database, *sql.DB) {
 	} else {
 		dbStorage, err := NewDatabase(db)
 		if err != nil {
-			log.Fatalf("cannot create database storage: %s", err)
+			logger.Log.Fatalf("cannot create database storage: %s", err)
 		}
 		return nil, dbStorage, db
 	}

@@ -3,6 +3,7 @@ package server
 import (
 	"encoding/json"
 	"github.com/Hauve/metricservice.git/internal/jsonmodel"
+	"github.com/Hauve/metricservice.git/internal/logger"
 	"io"
 	"net/http"
 	"strings"
@@ -11,7 +12,7 @@ import (
 
 func (s *MyServer) JSONGetHandler(w http.ResponseWriter, r *http.Request) {
 	if header := r.Header.Get("Content-Type"); !strings.Contains(header, "application/json") {
-		s.logger.Errorf("ERROR: bad content type for current path")
+		logger.Log.Errorf("ERROR: bad content type for current path")
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
@@ -23,13 +24,13 @@ func (s *MyServer) JSONGetHandler(w http.ResponseWriter, r *http.Request) {
 	body := r.Body
 	buf, err := io.ReadAll(body)
 	if err != nil {
-		s.logger.Errorf("ERROR: cannot read from body: %s", err)
+		logger.Log.Errorf("ERROR: cannot read from body: %s", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 	err = body.Close()
 	if err != nil {
-		s.logger.Errorf("ERROR: cannot close body of request: %s", err)
+		logger.Log.Errorf("ERROR: cannot close body of request: %s", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -37,7 +38,7 @@ func (s *MyServer) JSONGetHandler(w http.ResponseWriter, r *http.Request) {
 	data := jsonmodel.Metrics{}
 	err = json.Unmarshal(buf, &data)
 	if err != nil {
-		s.logger.Errorf("ERROR: cannot unmarshal json: %s", err)
+		logger.Log.Errorf("ERROR: cannot unmarshal json: %s", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -60,13 +61,13 @@ func (s *MyServer) JSONGetHandler(w http.ResponseWriter, r *http.Request) {
 
 	buf, err = json.Marshal(metric)
 	if err != nil {
-		s.logger.Errorf("ERROR: cannot encode data to json in reply: %s", err)
+		logger.Log.Errorf("ERROR: cannot encode data to json in reply: %s", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 	_, err = w.Write(buf)
 	if err != nil {
-		s.logger.Errorf("ERROR: writing fo body is failed: %s", err)
+		logger.Log.Errorf("ERROR: writing fo body is failed: %s", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}

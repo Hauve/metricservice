@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/Hauve/metricservice.git/internal/jsonmodel"
+	"github.com/Hauve/metricservice.git/internal/logger"
 	"io/fs"
 	"os"
 )
@@ -18,7 +19,7 @@ func (s *MyServer) restore() (err error) {
 	if err != nil {
 		if errors.Is(err, fs.ErrNotExist) {
 			// Чтобы избежать fatal при несуществующем файле для restore
-			s.logger.Warnf("file for restoring is not exsists")
+			logger.Log.Warnf("file for restoring is not exsists")
 			return nil
 		}
 		return fmt.Errorf("cant open dump file for restoring: %w", err)
@@ -42,7 +43,7 @@ func (s *MyServer) restore() (err error) {
 		case jsonmodel.Counter:
 			s.storage.SetCounter(v.ID, *v.Delta)
 		default:
-			s.logger.Warnf("given undefined metric type from dump: %s", v.MType)
+			logger.Log.Warnf("given undefined metric type from dump: %s", v.MType)
 			continue
 		}
 	}
